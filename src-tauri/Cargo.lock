@@ -219,7 +219,7 @@ dependencies = [
  "dirs 6.0.0",
  "fix-path-env",
  "log",
- "lovely-mac",
+ "lovely-unix",
  "pretty_env_logger",
  "serde",
  "serde_json",
@@ -2455,14 +2455,12 @@ checksum = "04cbf5b083de1c7e0222a7a51dbfdba1cbe1c6ab0b15e29fff3f6c077fd9cd9f"
 
 [[package]]
 name = "lovely-core"
-version = "0.6.0"
+version = "0.7.1"
 dependencies = [
- "bmm-lib",
  "chrono",
  "crop",
  "dirs 5.0.1",
  "getargs",
- "home",
  "itertools",
  "libc",
  "libloading 0.8.6",
@@ -2479,11 +2477,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "lovely-mac"
+name = "lovely-unix"
 version = "0.1.0"
 dependencies = [
  "ctor",
- "libc",
  "lovely-core",
  "once_cell",
 ]
