@@ -1,0 +1,3 @@
+[submodule "src-tauri/lovely-injector"]
+	path = src-tauri/lovely-injector
+	url = https://github.com/ethangreen-dev/lovely-injector
