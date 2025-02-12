@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Balatro Mod Manager</title>
+	<style>
+		@font-face {
+			font-family: "M6X11";
+			src: url("fonts/m6x11plus.woff2") format("woff2");
+		}
+
+		:root {
+			--bg-color: #1a0d19;
+			--accent-red: #ff4655;
+			--accent-yellow: #ffd700;
+			--pixel-size: 2px;
+			--grid-size: 40px;
+		}
+
+		body {
+			margin: 0;
+			padding: 0;
+			background: var(--bg-color);
+			min-height: 100vh;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			font-family: "M6X11", sans-serif;
+			overflow: hidden;
+		}
+
+		.container {
+			padding: 2rem;
+			position: relative;
+			width: 100%;
+			max-width: 800px;
+		}
+
+		.retro-button-container {
+			display: flex;
+			justify-content: center;
+			width: 100%;
+			margin: 2rem 0;
+		}
+
+		.animated-bg {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 200vw;
+			height: 200vh;
+			background:
+				repeating-linear-gradient(90deg,
+					rgba(255, 70, 85, 0.15) 0 var(--grid-size),
+					transparent var(--grid-size) calc(var(--grid-size) * 2)),
+				repeating-linear-gradient(180deg,
+					rgba(255, 70, 85, 0.15) 0 var(--grid-size),
+					transparent var(--grid-size) calc(var(--grid-size) * 2)),
+				radial-gradient(circle, transparent 20%, var(--bg-color) 100%);
+			transform: translate(-50%, -50%) rotate(15deg);
+			animation: gridMove 20s linear infinite;
+			z-index: 0;
+			opacity: 0.6;
+		}
+
+		@keyframes gridMove {
+			0% {
+				transform: translate(-50%, -50%) rotate(15deg) translate(0, 0);
+				opacity: 0.6;
+			}
+
+			50% {
+				transform: translate(-50%, -50%) rotate(15deg) translate(20px, -12px);
+				opacity: 0.8;
+			}
+
+			100% {
+				transform: translate(-50%, -50%) rotate(15deg) translate(0, 0);
+				opacity: 0.6;
+			}
+		}
+
+		.retro-border {
+			position: relative;
+			border: 4px solid var(--accent-red);
+			padding: 2rem;
+			background: rgba(0, 0, 0, 0.9);
+			box-shadow:
+				0 0 30px rgba(255, 70, 85, 0.3),
+				inset 0 0 20px rgba(255, 70, 85, 0.2);
+			z-index: 1;
+		}
+
+		.pixel-title {
+			color: var(--accent-yellow);
+			text-align: center;
+			margin: 0 0 2rem 0;
+		}
+
+		.title-main {
+			display: block;
+			font-size: 4rem;
+			text-transform: uppercase;
+			letter-spacing: 4px;
+			text-shadow:
+				2px 2px 0 var(--accent-red),
+				0 0 10px rgba(255, 70, 85, 0.4);
+			margin-bottom: 1rem;
+			animation: glitch 2s infinite;
+		}
+
+		.title-sub {
+			display: block;
+			font-size: 2rem;
+			text-shadow:
+				2px 2px 0 var(--accent-red),
+				0 0 10px rgba(255, 70, 85, 0.3);
+		}
+
+		.description {
+			color: var(--accent-yellow);
+			font-size: 1.5rem;
+			margin: 0 0 2rem 0;
+			text-shadow: 0 0 8px rgba(255, 70, 85, 0.3);
+			text-align: center;
+		}
+
+		.retro-button {
+			display: inline-flex;
+			padding: 1rem 2rem;
+			background: var(--accent-red);
+			color: white;
+			text-decoration: none;
+			position: relative;
+			border: none;
+			font-size: 1.25rem;
+			cursor: pointer;
+			transition: transform 0.2s ease;
+			overflow: hidden;
+			box-shadow:
+				0 0 10px rgba(255, 70, 85, 0.4),
+				inset 0 0 5px rgba(255, 255, 255, 0.2);
+		}
+
+		.retro-button:hover {
+			transform: translateY(-2px) scale(1.05);
+		}
+
+		.button-glare {
+			position: absolute;
+			top: 0;
+			left: -50%;
+			width: 40%;
+			height: 100%;
+			background: linear-gradient(90deg,
+					rgba(255, 255, 255, 0) 0%,
+					rgba(255, 255, 255, 0.3) 50%,
+					rgba(255, 255, 255, 0) 100%);
+			transform: skewX(-20deg);
+			animation: glare 3s infinite;
+		}
+
+		.font-credit {
+			text-align: center;
+			color: var(--accent-yellow);
+			font-size: 0.8rem;
+			opacity: 0.7;
+			margin-top: 2rem;
+			position: relative;
+			padding-top: 1rem;
+		}
+
+		.font-credit::before {
+			content: "";
+			position: absolute;
+			top: 0;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 100px;
+			height: 2px;
+			background: var(--accent-red);
+		}
+
+		@keyframes glitch {
+
+			0%,
+			100% {
+				text-shadow: 2px 2px 0 var(--accent-red), 0 0 10px rgba(255, 70, 85, 0.4);
+			}
+
+			25% {
+				text-shadow: -2px 2px 0 var(--accent-red), 0 0 15px rgba(255, 70, 85, 0.6);
+			}
+
+			50% {
+				text-shadow: 2px -2px 0 var(--accent-red), 0 0 20px rgba(255, 70, 85, 0.8);
+			}
+
+			75% {
+				text-shadow: -2px -2px 0 var(--accent-red), 0 0 15px rgba(255, 70, 85, 0.6);
+			}
+		}
+
+		@keyframes glare {
+			0% {
+				left: -50%;
+			}
+
+			100% {
+				left: 150%;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<div class="animated-bg"></div>
+
+		<div class="retro-border">
+			<h1 class="pixel-title">
+				<span class="title-main">BALATRO</span>
+				<span class="title-sub">MOD MANAGER</span>
+			</h1>
+
+			<div>
+				<p class="description">Install • Manage • Play</p>
+				<div class="retro-button-container">
+					<a href="https://github.com/skyline69/balatro-mod-manager" class="retro-button">
+						View on GitHub
+						<div class="button-glare"></div>
+					</a>
+				</div>
+			</div>
+
+			<div class="font-credit">Font by Daniel Linssen</div>
+		</div>
+	</div>
+</body>
+
+</html>
