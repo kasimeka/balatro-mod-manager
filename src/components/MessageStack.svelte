@@ -46,101 +46,102 @@
 </div>
 
 <style>
+	:global(html) {
+		font-size: 16px; /* Base font size */
+	}
+	@media (min-width: 768px) {
+		:global(html) {
+			font-size: 18px;
+		}
+	}
+	@media (min-width: 1024px) {
+		:global(html) {
+			font-size: 20px;
+		}
+	}
 	.message-stack {
 		position: fixed;
-		top: 20px;
-		right: 20px;
+		top: 1.25rem; /* 20px */
+		right: 1.25rem; /* 20px */
 		z-index: 9999;
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
+		gap: 0.75rem; /* 12px */
 		pointer-events: none;
 	}
-
 	.message {
-		padding: 16px 24px;
-		border-radius: 8px;
+		padding: 1rem 1.5rem; /* 16px 24px */
+		border-radius: 0.5rem; /* 8px */
 		color: white;
 		font-weight: 500;
-		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-		min-width: 300px;
+		box-shadow: 0 0.25rem 0.9375rem rgba(0, 0, 0, 0.2); /* 0 4px 15px */
+		min-width: 18.75rem; /* 300px */
 	}
-
 	.message-content {
 		display: flex;
 		align-items: center;
-		gap: 14px;
+		gap: 0.875rem; /* 14px */
 	}
-
 	.icon {
-		width: 28px;
-		height: 28px;
+		width: 1.75rem; /* 28px */
+		height: 1.75rem; /* 28px */
 		flex-shrink: 0;
 		color: rgba(255, 255, 255, 0.9);
-		filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+		filter: drop-shadow(
+			0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2)
+		); /* 0 1px 2px */
 	}
-
 	.text {
 		font-size: 1.1rem;
 		line-height: 1.4;
 		flex-grow: 1;
-	}
-
-	/* Updated background colors for better contrast */
+	} /* Background colors & borders for message types */
 	.success {
 		background-color: #2d6b4f;
-		border: 2px solid #459373;
+		border: 0.125rem solid #459373; /* 2px */
 	}
-
 	.error {
 		background-color: #4a2d32;
-		border: 2px solid #644047;
+		border: 0.125rem solid #644047; /* 2px */
 	}
-
 	.info {
 		background-color: #2d3d4a;
-		border: 2px solid #435662;
+		border: 0.125rem solid #435662; /* 2px */
 	}
-
 	.warning {
 		background-color: #4a452d;
-		border: 2px solid #625c43;
+		border: 0.125rem solid #625c43; /* 2px */
 	}
 	@media (max-width: 1160px) {
 		.message-stack {
-			top: 15px;
-			right: 15px;
+			top: 0.9375rem; /* 15px */
+			right: 0.9375rem; /* 15px */
 			left: auto;
 		}
-
 		.message {
 			min-width: unset;
 			width: 90%;
-			max-width: 320px;
-			padding: 12px 16px;
-			border-radius: 6px;
+			max-width: 20rem; /* 320px */
+			padding: 0.75rem 1rem; /* 12px 16px */
+			border-radius: 0.375rem; /* 6px */
 		}
-
 		.message-content {
-			gap: 10px;
+			gap: 0.625rem; /* 10px */
 		}
-
 		.icon {
-			width: 24px;
-			height: 24px;
+			width: 1.5rem; /* 24px */
+			height: 1.5rem; /* 24px */
 		}
-
 		.text {
 			font-size: 1rem;
 			line-height: 1.35;
 			word-break: break-word;
 		}
-
 		.success,
 		.error,
 		.info,
 		.warning {
-			border-width: 1.5px;
+			border-width: 0.09375rem; /* 1.5px */
 		}
 	}
 </style>

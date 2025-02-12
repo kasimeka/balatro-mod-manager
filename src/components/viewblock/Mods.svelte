@@ -594,177 +594,170 @@
 <ModView mod={$currentModView} on:checkDependencies={onDependencyCheck} />
 
 <style>
+	:global(html) {
+		font-size: 16px; /* Base font-size for standard screens */
+	}
+	@media (min-width: 768px) {
+		:global(html) {
+			font-size: 18px;
+		}
+	}
+	@media (min-width: 1024px) {
+		:global(html) {
+			font-size: 20px;
+		}
+	} /* Mods container and separator */
 	.mods-container {
 		display: flex;
 		gap: 1rem;
 		height: 100%;
 	}
-
 	.separator {
-		width: 2px;
+		width: 0.125rem; /* 2px */
 		background: #f4eee0;
 		height: 100%;
-	}
-
+	} /* Categories sidebar */
 	.categories {
-		width: 190px;
+		width: 11.875rem; /* ~190px */
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
 		overflow-y: auto;
-
-		&::-webkit-scrollbar {
-			width: 10px;
-		}
-
-		&::-webkit-scrollbar-track {
-			background: transparent;
-			border-radius: 15px;
-		}
-
-		&::-webkit-scrollbar-thumb {
-			background: #f4eee0;
-			border: 2px solid rgba(193, 65, 57, 0.8);
-			border-radius: 15px;
-		}
-		&::-webkit-scrollbar:horizontal {
-			display: none;
-		}
-		&::-webkit-scrollbar-corner {
-			background-color: transparent;
-		}
-
+	}
+	.categories::-webkit-scrollbar {
+		width: 0.625rem; /* 10px */
+	}
+	.categories::-webkit-scrollbar-track {
+		background: transparent;
+		border-radius: 0.9375rem; /* 15px */
+	}
+	.categories::-webkit-scrollbar-thumb {
+		background: #f4eee0;
+		border: 0.125rem solid rgba(193, 65, 57, 0.8); /* 2px */
+		border-radius: 0.9375rem;
+	}
+	.categories::-webkit-scrollbar:horizontal {
+		display: none;
+	}
+	.categories::-webkit-scrollbar-corner {
+		background-color: transparent;
+	}
+	.categories {
 		scrollbar-width: 0;
 		scrollbar-color: transparent transparent;
 	}
-
 	.categories button {
 		text-align: left;
-		padding: 1rem 1rem;
+		padding: 1rem;
 		background: #ea9600;
-		border: 2px solid #f4eee0;
+		border: 0.125rem solid #f4eee0;
 		color: #f4eee0;
 		font-family: "M6X11", sans-serif;
 		font-size: 1.1rem;
 		cursor: pointer;
 		transition: all 0.2s ease;
-		border-radius: 6px;
+		border-radius: 0.375rem; /* 6px */
 		margin-right: 0.3rem;
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
 	}
-
 	.categories button:hover {
 		background: #f4eee0;
 		color: #393646;
 	}
-
 	.categories button.active {
 		background: #f4eee0;
 		color: #393646;
-	}
-
+	} /* Mods Grid */
 	.mods-grid {
 		flex: 1;
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-		gap: 30px;
+		grid-template-columns: repeat(
+			auto-fill,
+			minmax(17.5rem, 1fr)
+		); /* 280px = 17.5rem */
+		gap: 1.875rem; /* 30px */
 		overflow-y: auto;
 		padding: 1rem;
-
-		&::-webkit-scrollbar {
-			width: 10px;
-		}
-
-		&::-webkit-scrollbar-track {
-			background: transparent;
-			border-radius: 15px;
-		}
-
-		&::-webkit-scrollbar-thumb {
-			background: #f4eee0;
-			border: 2px solid rgba(193, 65, 57, 0.8);
-			border-radius: 15px;
-		}
-		&::-webkit-scrollbar:horizontal {
-			display: none;
-		}
-		&::-webkit-scrollbar-corner {
-			background-color: transparent;
-		}
-
-		/* scrollbar-width: 0; */
-		/* scrollbar-color: transparent transparent; */
 	}
-
+	.mods-grid::-webkit-scrollbar {
+		width: 0.625rem;
+	}
+	.mods-grid::-webkit-scrollbar-track {
+		background: transparent;
+		border-radius: 0.9375rem;
+	}
+	.mods-grid::-webkit-scrollbar-thumb {
+		background: #f4eee0;
+		border: 0.125rem solid rgba(193, 65, 57, 0.8);
+		border-radius: 0.9375rem;
+	}
+	.mods-grid::-webkit-scrollbar:horizontal {
+		display: none;
+	}
+	.mods-grid::-webkit-scrollbar-corner {
+		background-color: transparent;
+	} /* Each mod card */
 	.mod-card {
 		--bg-color: var(--orig-color1, #4f6367);
 		--bg-color-2: var(--orig-color2, #334461);
-
 		display: flex;
 		flex-direction: column;
 		position: relative;
-		border-radius: 8px;
+		border-radius: 0.5rem; /* 8px */
 		overflow: hidden;
-		border: 2px solid #f4eee0;
-		width: 300px;
-		height: 330px;
+		border: 0.125rem solid #f4eee0;
+		width: 18.75rem; /* 300px */
+		height: 20.625rem; /* 330px */
 		margin: 0 auto;
 		padding: 1rem;
 		box-sizing: border-box;
 		cursor: pointer;
 		background-size: 100% 200%;
 		transition: all 0.3s ease;
-		/* Remove the duplicate background property and keep only this one */
 		background-image: repeating-linear-gradient(
 			-45deg,
 			var(--bg-color),
-			var(--bg-color) 10px,
-			var(--bg-color-2) 10px,
-			var(--bg-color-2) 20px
+			var(--bg-color) 0.625rem,
+			/* 10px */ var(--bg-color-2) 0.625rem,
+			var(--bg-color-2) 1.25rem /* 20px */
 		);
 	}
-
 	.mod-card:hover {
 		animation: stripe-slide-up 1s linear infinite;
 		scale: 1.05;
 	}
-
 	@keyframes stripe-slide-up {
 		0% {
 			background-position: 0 0;
 		}
 		100% {
-			background-position: 0 -20px;
+			background-position: 0 -1.25rem;
 		}
-	}
-
+	} /* Mod image area */
 	.mod-image {
 		position: relative;
-		height: 150px;
+		height: 9.375rem; /* 150px */
 	}
-
 	.mod-image img {
 		width: 100%;
 		height: 100%;
-		border-radius: 5px;
+		border-radius: 0.3125rem; /* 5px */
 		object-fit: cover;
-		border: 2px solid #f4eee0;
-	}
-
+		border: 0.125rem solid #f4eee0;
+	} /* Tags on the mod image */
 	.tags {
 		position: absolute;
-		top: 7.2rem; /* Adjusted top position */
-		right: 0.35rem; /* Adjusted right position */
+		top: 7.2rem;
+		right: 0.35rem;
 		display: flex;
 		gap: 0.5rem;
 	}
 	.tag :global(svg) {
 		position: relative;
-		top: -1px; /* Adds subtle upward adjustment to the icons */
+		top: -1px;
 	}
-
 	.tag {
 		display: flex;
 		align-items: center;
@@ -772,23 +765,22 @@
 		gap: 0.2rem;
 		padding: 0.15rem 0.3rem;
 		background: rgba(0, 0, 0, 0.7);
-		border-radius: 4px;
+		border-radius: 0.25rem;
 		font-size: 0.9rem;
 		color: #f4eee0;
-	}
+	} /* Download and delete buttons */
 	.download-button {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
-		width: calc(100% - 2rem); /* Account for parent padding */
+		width: calc(100% - 2rem);
 		padding: 0.75rem;
 		background: #56a786;
 		color: #f4eee0;
 		border: none;
-		outline: #459373 solid 2px;
-
-		border-radius: 4px;
+		outline: #459373 solid 0.125rem;
+		border-radius: 0.25rem;
 		font-family: "M6X11", sans-serif;
 		font-size: 1rem;
 		cursor: pointer;
@@ -796,47 +788,39 @@
 		position: absolute;
 		bottom: 1rem;
 		left: 1rem;
-
-		&.installed {
-			background: #808080;
-			outline-color: #666666;
-			cursor: not-allowed;
-		}
-
-		&.installed:hover {
-			background: #808080;
-			transform: none;
-		}
 	}
-
+	.download-button.installed {
+		background: #808080;
+		outline-color: #666666;
+		cursor: not-allowed;
+	}
+	.download-button.installed:hover {
+		background: #808080;
+		transform: none;
+	}
 	.download-button:hover {
 		background: #74cca8;
-		transform: translateY(-2px);
+		transform: translateY(-0.125rem); /* 2px upward */
 	}
-
 	.download-button:active {
 		transform: translateY(0);
 	}
-
 	.mod-info {
 		flex: 1;
 		padding: 0.5rem;
 		position: relative;
 		bottom: 1rem;
 	}
-
 	.mod-info h3 {
 		color: #fdcf51;
 		font-size: 1.5rem;
 		margin-bottom: 0.2rem;
 	}
-
 	.mod-info p {
 		color: #f4eee0;
 		font-size: 1rem;
 		line-height: 1.2;
 	}
-
 	.button-container {
 		display: flex;
 		gap: 0.5rem;
@@ -845,14 +829,12 @@
 		left: 1rem;
 		width: calc(100% - 2rem);
 	}
-
 	.download-button {
 		flex: 1;
 		position: static;
 		bottom: auto;
 		left: auto;
 	}
-
 	.delete-button {
 		display: flex;
 		align-items: center;
@@ -861,21 +843,18 @@
 		background: #c14139;
 		color: #f4eee0;
 		border: none;
-		outline: #a13029 solid 2px;
-		border-radius: 4px;
+		outline: #a13029 solid 0.125rem;
+		border-radius: 0.25rem;
 		cursor: pointer;
 		transition: all 0.2s ease;
 	}
-
 	.delete-button:hover {
 		background: #d4524a;
-		transform: translateY(-2px);
+		transform: translateY(-0.125rem);
 	}
-
 	.delete-button:active {
 		transform: translateY(0);
-	}
-
+	} /* Loading area */
 	.loading-container {
 		display: flex;
 		flex-direction: column;
@@ -883,23 +862,20 @@
 		justify-content: center;
 		flex: 1;
 	}
-
 	.loading-text {
 		color: #f4eee0;
 		font-family: "M6X11", sans-serif;
 		font-size: 1.5rem;
-		min-width: 150px;
+		min-width: 9.375rem; /* ~150px */
 	}
-
 	.spinner {
-		width: 13px;
-		height: 13px;
-		border: 2px solid #f4eee0;
+		width: 0.8125rem; /* 13px */
+		height: 0.8125rem;
+		border: 0.125rem solid #f4eee0;
 		border-bottom-color: transparent;
 		border-radius: 50%;
 		animation: spin 1s linear infinite;
 	}
-
 	@keyframes spin {
 		from {
 			transform: rotate(0deg);
@@ -908,7 +884,6 @@
 			transform: rotate(360deg);
 		}
 	}
-
 	.download-button:disabled {
 		opacity: 0.8;
 		cursor: not-allowed;

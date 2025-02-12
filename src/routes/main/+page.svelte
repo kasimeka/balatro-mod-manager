@@ -83,6 +83,19 @@
 </div>
 
 <style>
+	:global(html) {
+		font-size: 16px; /* Default root font-size */
+	}
+	@media (min-width: 768px) {
+		:global(html) {
+			font-size: 18px;
+		}
+	}
+	@media (min-width: 1024px) {
+		:global(html) {
+			font-size: 20px;
+		}
+	}
 	.main-page {
 		width: 100vw;
 		height: 100vh;
@@ -95,7 +108,6 @@
 	header {
 		margin-bottom: -1rem;
 	}
-
 	h1 {
 		color: #f4eee0;
 		font-size: 3rem;
@@ -107,13 +119,11 @@
 			-2px 2px 0 #000,
 			2px 2px 0 #000;
 	}
-
 	nav {
 		display: flex;
 		gap: 1rem;
 		margin-bottom: 2rem;
 	}
-
 	button {
 		background: transparent;
 		border: 2px solid #f4eee0;
@@ -125,13 +135,11 @@
 		cursor: pointer;
 		transition: all 0.2s ease;
 	}
-
 	button:hover,
 	button.active {
 		background: #f4eee0;
 		color: #393646;
 	}
-
 	.content {
 		flex: 1;
 		background: rgba(193, 65, 57, 0.8);
@@ -140,34 +148,28 @@
 		padding: 2rem;
 		margin-bottom: 2rem;
 		outline: 2px solid #f4eee0;
-		overflow-y: auto; /* Enable vertical scrolling */
+		overflow-y: auto;
 		max-height: calc(100vh - 12rem);
 		min-height: 0;
-
-		&::-webkit-scrollbar {
-			width: 10px;
-		}
-
-		&::-webkit-scrollbar-track {
-			background: transparent;
-			border-radius: 15px;
-		}
-
-		&::-webkit-scrollbar-thumb {
-			background: #f4eee0;
-			border: 2px solid rgba(193, 65, 57, 0.8);
-			border-radius: 15px;
-		}
-
-		&::-webkit-scrollbar:horizontal {
-			display: none;
-		}
-
-		&::-webkit-scrollbar-corner {
-			background-color: transparent;
-		}
 	}
-
+	.content::-webkit-scrollbar {
+		width: 10px;
+	}
+	.content::-webkit-scrollbar-track {
+		background: transparent;
+		border-radius: 15px;
+	}
+	.content::-webkit-scrollbar-thumb {
+		background: #f4eee0;
+		border: 2px solid rgba(193, 65, 57, 0.8);
+		border-radius: 15px;
+	}
+	.content::-webkit-scrollbar:horizontal {
+		display: none;
+	}
+	.content::-webkit-scrollbar-corner {
+		background-color: transparent;
+	}
 	.version-text {
 		position: fixed;
 		bottom: 1rem;
@@ -184,18 +186,16 @@
 		position: relative;
 		margin-bottom: 2rem;
 	}
-	header {
-		margin-bottom: -1rem;
-	}
-
-	@media (max-width: 1160px) {
+	@media (max-width: 768px) {
+		h1 {
+			font-size: 2.5rem;
+		}
 		button {
-			padding: 0.6rem 1.2rem;
-			border-radius: 8px;
-			font-family: "M6X11", sans-serif;
-			font-size: 0.9rem;
-			cursor: pointer;
-			transition: all 0.2s ease;
+			font-size: 1rem;
+			padding: 0.5rem 1rem;
+		}
+		.main-page {
+			padding: 1rem;
 		}
 	}
 </style>

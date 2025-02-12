@@ -518,6 +518,7 @@
 							target="_blank"
 							rel="noopener noreferrer"
 							class="repo-button"
+							draggable="false"
 						>
 							<Github size={16} />
 							Repository
@@ -897,6 +898,7 @@
 		text-decoration: none;
 		margin-top: 1rem;
 		justify-content: center;
+		-webkit-user-drag: none;
 	}
 
 	.repo-button:hover {

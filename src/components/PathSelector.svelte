@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
 	import { FolderDot } from "lucide-svelte";
-    import { addMessage } from "$lib/stores";
+	import { addMessage } from "$lib/stores";
 
 	let selectedPath = "";
 	let placeholder = "Choose Balatro Path";
@@ -42,10 +42,7 @@
 
 			if (isValid) {
 				await invoke("set_balatro_path", { path: selectedPath });
-				addMessage(
-					"Balatro path set successfully!",
-					"success",
-				);
+				addMessage("Balatro path set successfully!", "success");
 			} else {
 				addMessage(
 					"Invalid Balatro path. Please select the correct directory.",
@@ -61,23 +58,14 @@
 		try {
 			const paths: string[] = await invoke("find_steam_balatro");
 			if (paths.length === 0) {
-				addMessage(
-					"Balatro not found in Steam installation",
-					"error",
-				);
+				addMessage("Balatro not found in Steam installation", "error");
 			} else {
 				selectedPath = paths[0];
 				await invoke("set_balatro_path", { path: selectedPath });
-				addMessage(
-					"Successfully set Steam path",
-					"success",
-				);
+				addMessage("Successfully set Steam path", "success");
 			}
 		} catch (error) {
-			addMessage(
-				"Error finding Steam path: " + error,
-				"error",
-			);
+			addMessage("Error finding Steam path: " + error, "error");
 		} finally {
 			isLoading = false;
 		}
@@ -106,22 +94,33 @@
 </div>
 
 <style>
+	:global(html) {
+		font-size: 16px; /* Base font size */
+	}
+	@media (min-width: 768px) {
+		:global(html) {
+			font-size: 18px;
+		}
+	}
+	@media (min-width: 1024px) {
+		:global(html) {
+			font-size: 20px;
+		}
+	}
 	.path-selector {
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
 		margin: 1rem 0;
 	}
-
 	.input-container {
 		width: 20rem;
 	}
-
 	input[type="text"] {
 		width: 100%;
 		padding: 0.75rem;
-		border: 2px solid #fda200;
-		border-radius: 8px;
+		border: 0.125rem solid #fda200; /* 2px */
+		border-radius: 0.5rem; /* 8px */
 		background-color: #c88000;
 		font-family: "M6X11", sans-serif;
 		color: white;
@@ -134,28 +133,25 @@
 		-webkit-user-select: none;
 		user-select: none;
 	}
-
 	input[type="text"]:hover:not(:disabled) {
 		border-color: #f4eee0;
 	}
-
 	input[type="text"]::placeholder {
 		color: white;
 		-webkit-user-select: none;
 		user-select: none;
 	}
-
 	.steam-button {
 		padding: 0.5rem 1rem;
-		border: 2px solid #2e6b9a;
-		border-radius: 8px;
+		border: 0.125rem solid #2e6b9a; /* 2px */
+		border-radius: 0.5rem; /* 8px */
 		background-color: #1a9fff;
 		color: #ffffff;
 		font-family: inherit;
 		font-size: 1.1rem;
 		cursor: pointer;
 		width: 13rem;
-		height: 40px;
+		height: 2.5rem; /* 40px ÷ 16 = 2.5rem */
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -163,16 +159,13 @@
 		transition: all 0.2s ease;
 		overflow: hidden;
 	}
-
 	.steam-button:hover {
 		background-color: #3daeff;
-		border: 2px solid #8fc8ff;
+		border: 0.125rem solid #8fc8ff;
 	}
-
 	.steam-button:active {
 		transform: scale(0.98);
 	}
-
 	.steam-button:disabled {
 		cursor: not-allowed;
 		opacity: 0.8;
@@ -180,14 +173,13 @@
 		transform: none;
 	}
 	.throbber {
-		width: 20px;
-		height: 20px;
-		border: 3px solid #f4eee0;
+		width: 1.25rem; /* 20px ÷ 16 = 1.25rem */
+		height: 1.25rem;
+		border: 0.1875rem solid #f4eee0; /* 3px ÷ 16 = 0.1875rem */
 		border-radius: 50%;
 		border-top-color: transparent;
 		animation: spin 1s linear infinite;
 	}
-
 	@media (max-width: 1160px) {
 		.steam-button {
 			width: 12rem;
@@ -197,11 +189,10 @@
 			scale: 0.8;
 		}
 		.steam-button .throbber {
-			width: 15px;
-			height: 15px;
+			width: 0.9375rem; /* 15px ÷ 16 = 0.9375rem */
+			height: 0.9375rem;
 		}
 	}
-
 	@keyframes spin {
 		to {
 			transform: rotate(360deg);

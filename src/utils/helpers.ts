@@ -25,7 +25,7 @@ export function stripMarkdown(text: string): string {
 	);
 }
 
-export function truncateText(text: string, maxLength: number = 65): string {
+export function truncateText(text: string, maxLength: number = 60): string {
 	if (text.length <= maxLength) return text;
 	return text.slice(0, maxLength).trim() + "...";
 }

@@ -5,7 +5,6 @@
 
 	import { goto } from "$app/navigation";
 
-
 	let selectedOption = "steam";
 	let showCustomInput = false;
 	let selectedPath = "";
@@ -158,35 +157,40 @@
 </div>
 
 <style>
+	:global(html) {
+		font-size: 16px; /* Base font size */
+	}
+	@media (min-width: 768px) {
+		:global(html) {
+			font-size: 18px;
+		}
+	}
+	@media (min-width: 1024px) {
+		:global(html) {
+			font-size: 20px;
+		}
+	}
 	:root {
-		/* Base Colors */
-		/* --color-dark: #459373; */
-		/* --color-medium: #56a786; */
-		/* --color-light: #74cca8; */
-		/* --color-cream: #f4eee0; */
+		/* Base Colors */ /* --color-dark: #459373; */ /* --color-medium: #56a786; */ /* --color-light: #74cca8; */ /* --color-cream: #f4eee0; */
 		--color-dark: #3b41a8; /* Brighter base blue */
 		--color-medium: #4b52d1; /* Vibrant medium blue */
 		--color-light: #6166ff; /* Bright highlight blue */
 		--color-cream: #f4eee0; /* Original cream color */
-
 		--text-primary: var(--color-cream);
 		--text-secondary: var(--color-light);
 		--background-primary: var(--color-dark);
 		--background-secondary: var(--color-medium);
 		--accent: var(--color-light);
 	}
-
 	.page-wrapper {
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		width: 100%;
 	}
-
 	.button-wrapper {
 		position: relative;
 	}
-
 	.overlay {
 		position: absolute;
 		top: 0;
@@ -196,51 +200,48 @@
 		background: transparent;
 		z-index: 100;
 	}
-
 	.container {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		width: 400px;
+		width: 25rem; /* 400px */
 		padding: 2.5rem;
-		border-radius: 25px;
-		background-color: var(--background-primary);
-		/* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); */
-		outline: 2px solid var(--color-medium);
+		border-radius: 1.5625rem; /* 25px */
+		background-color: var(
+			--background-primary
+		); /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); */
+		outline: 0.125rem solid var(--color-medium); /* 2px */
 		color: var(--text-primary);
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		height: auto;
-		min-height: 150px;
+		min-height: 9.375rem; /* 150px */
 		position: relative;
 	}
-
 	.action-button {
 		margin-top: 2rem;
 		padding: 0.75rem 2rem;
-		border: 2px solid var(--color-cream);
-		border-radius: 12px;
+		border: 0.125rem solid var(--color-cream);
+		border-radius: 0.75rem; /* 12px */
 		background-color: transparent;
 		color: var(--color-cream);
 		font-family: inherit;
-		font-size: 1.4rem; /* Slightly larger font */
+		font-size: 1.4rem;
 		cursor: pointer;
-		width: 150px; /* Increased from 120px */
-		height: 60px; /* Increased from 45px */
+		width: 9.375rem; /* 150px */
+		height: 3.75rem; /* 60px */
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-		overflow: hidden; /* Prevents content from spilling during transition */
+		overflow: hidden;
 	}
 	.action-button:hover {
 		background-color: var(--color-cream);
 		color: var(--background-primary);
 	}
-
 	.action-button:active {
 		transform: scale(0.98);
 	}
-
 	.action-button:disabled {
 		cursor: not-allowed;
 		opacity: 0.8;
@@ -248,30 +249,26 @@
 		transform: none;
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
-
 	.action-button:has(.throbber) {
-		width: 70px; /* Smaller width when showing throbber */
+		width: 4.375rem; /* 70px */
 		padding: 0.75rem;
 		background-color: #f4eee0;
 	}
-
 	.throbber {
-		width: 24px;
-		height: 24px;
-		border: 3px solid var(--background-primary);
+		width: 1.5rem; /* 24px */
+		height: 1.5rem; /* 24px */
+		border: 0.1875rem solid var(--background-primary); /* 3px */
 		border-radius: 50%;
 		border-top-color: transparent;
 		animation:
 			spin 1s linear infinite,
 			fade-in 0.3s ease;
 	}
-
 	@keyframes spin {
 		to {
 			transform: rotate(360deg);
 		}
 	}
-
 	@keyframes fade-in {
 		from {
 			opacity: 0;
@@ -280,34 +277,29 @@
 			opacity: 1;
 		}
 	}
-
 	.container.expanded {
-		min-height: 250px;
+		min-height: 15.625rem; /* 250px */
 	}
-
 	.input-container {
 		width: 80%;
 		margin-top: 1rem;
 	}
-
 	h2 {
 		margin: 0;
 		font-size: 2rem;
 		font-weight: 600;
 		text-align: center;
 	}
-
 	p {
 		margin: 0.5rem 0 1.5rem;
 		font-size: 1.2rem;
 		opacity: 0.9;
 		text-align: center;
 	}
-
 	.radio-group {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem; /* Increased from 1rem to 1.5rem to match the spacing in the image */
+		gap: 1.5rem; /* Increased to 1.5rem */
 		width: 100%;
 	}
 	.radio-label {
@@ -316,58 +308,50 @@
 		gap: 1rem;
 		cursor: pointer;
 	}
-
 	.radio-label input[type="radio"] {
 		appearance: none;
 		-webkit-appearance: none;
-		width: 24px;
-		height: 24px;
-		border: 2px solid var(--color-cream);
+		width: 1.5rem; /* 24px */
+		height: 1.5rem; /* 24px */
+		border: 0.125rem solid var(--color-cream);
 		border-radius: 50%;
 		margin: 0;
 		cursor: pointer;
 		position: relative;
 		transition: all 0.2s ease;
 	}
-
 	.radio-label input[type="radio"]:checked {
 		border-color: var(--color-cream);
 		background-color: transparent;
 	}
-
 	.radio-label input[type="radio"]:checked::after {
 		content: "";
 		position: absolute;
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
-		width: 12px;
-		height: 12px;
+		width: 0.75rem; /* 12px */
+		height: 0.75rem; /* 12px */
 		border-radius: 50%;
 		background-color: var(--color-cream);
 	}
-
 	.radio-label input[type="radio"]:hover {
 		border-color: var(--color-light);
 		opacity: 0.8;
 	}
-
 	.radio-text {
 		color: #f4eee0;
-		/* distance between 2 elements */
 		font-size: 1.4rem;
 	}
-
 	.input-container {
 		width: 100%;
 		margin: 1rem;
 	}
-
 	input[type="text"] {
 		width: 100%;
 		padding: 0.75rem;
-		border: 2px solid #fda200;
-		border-radius: 8px;
+		border: 0.125rem solid #fda200;
+		border-radius: 0.5rem; /* 8px */
 		background-color: #c88000;
 		font-family: "M6X11", sans-serif;
 		color: white;
@@ -380,11 +364,9 @@
 		-webkit-user-select: none;
 		user-select: none;
 	}
-
 	input[type="text"]:hover {
 		border-color: var(--text-primary);
 	}
-
 	input[type="text"]::placeholder {
 		color: white;
 		-webkit-user-select: none;

@@ -79,6 +79,19 @@
 </div>
 
 <style>
+	:global(html) {
+		font-size: 16px; /* Base font size for standard screens */
+	}
+	@media (min-width: 768px) {
+		:global(html) {
+			font-size: 18px;
+		}
+	}
+	@media (min-width: 1024px) {
+		:global(html) {
+			font-size: 20px;
+		}
+	}
 	h2 {
 		font-size: 2.5rem;
 		margin-bottom: 2rem;
@@ -92,14 +105,13 @@
 	}
 	.content {
 		flex: 1;
-	}
-
+	} /* Reindex Mods Button */
 	.reindex-button {
 		background: #56a786;
 		color: #f4eee0;
 		border: none;
-		outline: #459373 solid 2px;
-		border-radius: 4px;
+		outline: #459373 solid 0.125rem; /* 2px */
+		border-radius: 0.25rem; /* 4px */
 		padding: 0.75rem 1.5rem;
 		font-family: "M6X11", sans-serif;
 		font-size: 1.2rem;
@@ -110,48 +122,34 @@
 		align-items: center;
 		gap: 0.5rem;
 	}
-
 	.reindex-button:hover {
 		background: #74cca8;
-		transform: translateY(-2px);
+		transform: translateY(-0.125rem); /* 2px upward */
 	}
-
-	.throbber {
-		width: 20px;
-		height: 20px;
-		border: 3px solid #f4eee0;
-		border-radius: 50%;
-		border-top-color: transparent;
-		animation: spin 1s linear infinite;
-	}
-
-	.warning {
-		color: #ffd700; /* Gold/yellow for warning */
-		font-size: 1.1rem;
-		border-left: 3px solid #ffd700;
-		padding-left: 0.8rem;
-		margin-top: 0.8rem;
-		max-width: 600px !important;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-
 	.reindex-button:disabled {
 		cursor: not-allowed;
 		opacity: 0.8;
 		transform: none;
+	} /* Throbber for loading state */
+	.throbber {
+		width: 1.25rem; /* 20px */
+		height: 1.25rem;
+		border: 0.1875rem solid #f4eee0; /* 3px */
+		border-radius: 50%;
+		border-top-color: transparent;
+		animation: spin 1s linear infinite;
 	}
-
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	} /* Clear Cache Button */
 	.clear-cache-button {
 		background: #6d28d9;
 		color: #f4eee0;
 		border: none;
-		outline: #5b21b6 solid 2px;
-		border-radius: 4px;
+		outline: #5b21b6 solid 0.125rem; /* 2px */
+		border-radius: 0.25rem; /* 4px */
 		padding: 0.75rem 1.5rem;
 		font-family: "M6X11", sans-serif;
 		font-size: 1.2rem;
@@ -161,27 +159,23 @@
 		align-items: center;
 		gap: 0.5rem;
 	}
-
 	.clear-cache-button:hover:not(:disabled) {
 		background: #7c3aed;
-		transform: translateY(-2px);
+		transform: translateY(-0.125rem);
 	}
-
 	.clear-cache-button:disabled {
 		cursor: not-allowed;
 		opacity: 0.8;
 		transform: none;
-	}
-
+	} /* Description styling */
 	.description {
 		color: #f4eee0;
 		font-size: 1.2rem;
 		margin-top: 0.5rem;
 		opacity: 0.9;
-		max-width: 400px;
+		max-width: 25rem; /* 400px */
 		line-height: 1.4;
 	}
-
 	@media (max-width: 1160px) {
 		h2 {
 			font-size: 2rem;
@@ -199,7 +193,6 @@
 			font-size: 1rem;
 			padding: 0.6rem 1.2rem;
 		}
-
 		.description {
 			font-size: 1.1rem;
 			max-width: 100%;
