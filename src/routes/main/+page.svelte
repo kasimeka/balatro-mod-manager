@@ -69,6 +69,7 @@
 	});
 
 	$: {
+		// FIXME: Scrolling is disabled for Settings and About too then
 		if ($currentModView) {
 			// Scroll both window and content container to top
 			window.scrollTo({ top: 0, behavior: "instant" });

@@ -234,14 +234,6 @@
 				);
 			}
 
-			// Determine dependencies based on mod type
-			let modDependencies = dependencies;
-			if (mod.title.toLowerCase() === "steamodded") {
-				modDependencies = [];
-			} else if (mod.title.toLowerCase() === "talisman") {
-				modDependencies = [];
-			}
-
 			await invoke("add_installed_mod", {
 				name: mod.title,
 				path: installedPath,
