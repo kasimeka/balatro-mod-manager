@@ -70,7 +70,7 @@
 
 	$: {
 		// FIXME: Scrolling is disabled for Settings and About too then
-		if ($currentModView) {
+		if ($currentModView && currentSection === "mods") {
 			// Scroll both window and content container to top
 			window.scrollTo({ top: 0, behavior: "instant" });
 			if (contentElement) {
@@ -121,7 +121,7 @@
 
 	<div
 		class="content"
-		class:modal-open={!!$currentModView}
+		class:modal-open={$currentModView && currentSection === "mods"}
 		bind:this={contentElement}
 	>
 		{#if currentSection === "mods"}
