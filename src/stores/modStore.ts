@@ -75,7 +75,6 @@ export interface DependencyCheck {
 export interface InstalledMod {
 	name: string;
 	path: string;
-	// collection_hash: string | null;
 }
 
 interface InstallationStatus {
@@ -98,18 +97,9 @@ export const currentModView = writable<Mod | null>(null);
 export const currentJokerView = writable<Mod | null>(null);
 export const searchResults = writable<Mod[]>([]);
 export const modsStore = writable<Mod[]>([]);
-
-
 export const installationStatus: Writable<InstallationStatus> = writable({});
-
 export const loadingStates2 = writable<{ [key: string]: boolean }>({});
-//
-//
-// modsStore.subscribe(value => {
-// 	if (typeof window !== 'undefined') {
-// 		localStorage.setItem('mods', JSON.stringify(value));
-// 	}
-// });
+export const currentCategory = createPersistentCategory();
 
 
 function createPersistentCategory() {
@@ -125,7 +115,6 @@ function createPersistentCategory() {
 	};
 }
 
-export const currentCategory = createPersistentCategory();
 
 
 export interface WarningPopupState {

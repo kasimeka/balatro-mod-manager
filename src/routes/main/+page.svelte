@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { writable } from "svelte/store";
 	import ShaderBackground from "../../components/ShaderBackground.svelte";
 	import About from "../../components/viewblock/About.svelte";
 	import LaunchButton from "../../components/LaunchButton.svelte";
@@ -7,8 +8,7 @@
 	import RequiresPopup from "../../components/RequiresPopup.svelte";
 	import WarningPopup from "../../components/WarningPopup.svelte";
 	import type { DependencyCheck, InstalledMod } from "../../stores/modStore";
-	import { currentModView } from "../../stores/modStore";
-	import { backgroundEnabled } from "../../stores/modStore";
+	import { backgroundEnabled, currentModView } from "../../stores/modStore";
 	import {
 		installationStatus,
 		showWarningPopup,
@@ -16,28 +16,14 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { addMessage } from "$lib/stores";
 	import UninstallDialog from "../../components/UninstallDialog.svelte";
-	import { onMount } from "svelte";
+	import { onMount } from "svelte"; // Declare local state as writable stores so updates are fully reactive
 
-	let currentSection = "mods";
-	// window.addEventListener("resize", () => {
-	//     console.log(
-	//         `Window size: ${window.innerWidth} x ${window.innerHeight}`,
-	//     );
-	// });
-
-	$: if (currentSection !== "mods") {
-		// Store will retain the value but component won't show
-		// Will reappear when returning to mods section
-	}
-
-	// Add these for the RequiresPopup
-	let showRequiresPopup = false;
-
-	let contentElement: HTMLDivElement;
-
-	let showUninstallDialog = false;
-	let selectedMod = { name: "", path: "" };
-	let dependents: string[] = [];
+	const currentSection = writable("mods");
+	const showRequiresPopup = writable(false);
+	const selectedMod = writable({ name: "", path: "" });
+	const dependents = writable<string[]>([]);
+	const modRequirements = writable({ steamodded: false, talisman: false });
+	const showUninstallDialog = writable(false);
 
 	async function handleRefresh() {
 		const installedMods: InstalledMod[] = await invoke(
@@ -49,42 +35,27 @@
 			),
 		);
 	}
-
 	function showError(error: string) {
 		addMessage(`Uninstall failed: ${error}`, "error");
 	}
-
-	let modRequirements = {
-		steamodded: false,
-		talisman: false,
-	};
-
 	function handleDependencyCheck(requirements: DependencyCheck) {
-		modRequirements = requirements;
-		showRequiresPopup = true;
+		// Use a new object so that the update is detected
+		modRequirements.set({ ...requirements });
+		showRequiresPopup.set(true);
 	}
-
 	onMount(() => {
 		handleRefresh();
 	});
 
-	$: {
-		// FIXME: Scrolling is disabled for Settings and About too then
-		if ($currentModView && currentSection === "mods") {
-			// Scroll both window and content container to top
-			window.scrollTo({ top: 0, behavior: "instant" });
-			if (contentElement) {
-				contentElement.scrollTop = 0;
-			}
-			// Lock scrolling at multiple levels
-			document.body.style.overflow = "hidden";
-			document.documentElement.style.overflow = "hidden";
-		} else {
-			// Restore scrolling
-			document.body.style.overflow = "auto";
-			document.documentElement.style.overflow = "auto";
-		}
+	if ($currentModView && $currentSection === "mods") {
+		window.scrollTo({ top: 0, behavior: "instant" });
+		document.body.style.overflow = "hidden";
+		document.body.style.overflow = "hidden";
+	} else {
+		document.body.style.overflow = "auto";
+		document.documentElement.style.overflow = "auto";
 	}
+
 </script>
 
 {#if $backgroundEnabled}
@@ -99,55 +70,50 @@
 		</div>
 		<nav>
 			<button
-				class:active={currentSection === "mods"}
-				on:click={() => (currentSection = "mods")}
+				class:active={$currentSection === "mods"}
+				onclick={() => currentSection.set("mods")}
 			>
 				Mods
 			</button>
 			<button
-				class:active={currentSection === "settings"}
-				on:click={() => (currentSection = "settings")}
+				class:active={$currentSection === "settings"}
+				onclick={() => currentSection.set("settings")}
 			>
 				Settings
 			</button>
 			<button
-				class:active={currentSection === "about"}
-				on:click={() => (currentSection = "about")}
+				class:active={$currentSection === "about"}
+				onclick={() => currentSection.set("about")}
 			>
 				About
 			</button>
 		</nav>
 	</header>
 
-	<div
-		class="content"
-		class:modal-open={$currentModView && currentSection === "mods"}
-		bind:this={contentElement}
-	>
-		{#if currentSection === "mods"}
+	<div class="content">
+		{#if $currentSection === "mods"}
 			<Mods
 				mod={null}
 				{handleDependencyCheck}
 				on:request_uninstall={(e) => {
-					selectedMod = e.detail.mod;
-					dependents = e.detail.dependents;
-					showUninstallDialog = true;
+					$selectedMod = e.detail.mod;
+					$dependents = e.detail.dependents;
+					$showUninstallDialog = true;
 				}}
 			/>
 		{/if}
-
-		{#if currentSection === "settings"}
+		{#if $currentSection === "settings"}
 			<Settings />
 		{/if}
-
-		{#if currentSection === "about"}
+		{#if $currentSection === "about"}
 			<About />
 		{/if}
 	</div>
+
 	<RequiresPopup
-		bind:show={showRequiresPopup}
-		requiresSteamodded={modRequirements.steamodded}
-		requiresTalisman={modRequirements.talisman}
+		bind:show={$showRequiresPopup}
+		requiresSteamodded={$modRequirements.steamodded}
+		requiresTalisman={$modRequirements.talisman}
 	/>
 
 	<WarningPopup
@@ -157,10 +123,10 @@
 		onCancel={$showWarningPopup.onCancel}
 	/>
 	<UninstallDialog
-		bind:show={showUninstallDialog}
-		modName={selectedMod.name}
-		modPath={selectedMod.path}
-		{dependents}
+		bind:show={$showUninstallDialog}
+		modName={$selectedMod.name}
+		modPath={$selectedMod.path}
+		dependents={$dependents}
 		on:uninstalled={handleRefresh}
 		on:error={({ detail }) => showError(detail)}
 	/>
@@ -254,18 +220,10 @@
 		}
 	}
 
-	.content.modal-open {
-		overflow: hidden !important;
-		scrollbar-gutter: stable;
-	}
 
 	/* Add scrollbar width variable for consistency */
 	:root {
 		--scrollbar-width: 10px;
-	}
-
-	.content.modal-open {
-		padding-right: var(--scrollbar-width);
 	}
 
 	.version-text {
