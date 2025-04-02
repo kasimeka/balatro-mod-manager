@@ -1231,7 +1231,7 @@ async fn check_existing_installation(
 #[allow(non_snake_case)]
 #[tauri::command]
 async fn install_mod(
-    state: tauri::State<'_, AppState>,
+    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
     url: String,
     folderName: String,
 ) -> Result<PathBuf, String> {
