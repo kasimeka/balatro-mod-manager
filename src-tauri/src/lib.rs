@@ -18,7 +18,6 @@ use zip::ZipArchive;
 //
 use std::collections::HashSet;
 use std::fs::File;
-// use std::panic;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
@@ -34,7 +33,6 @@ use bmm_lib::database::Database;
 use bmm_lib::database::InstalledMod;
 use bmm_lib::discord_rpc::DiscordRpcManager;
 use bmm_lib::errors::AppError;
-use bmm_lib::finder::get_lovely_mods_dir;
 use bmm_lib::finder::is_balatro_running;
 use bmm_lib::finder::is_steam_running;
 use bmm_lib::local_mod_detection;
@@ -354,8 +352,13 @@ async fn check_untracked_mods() -> Result<bool, String> {
 
 #[tauri::command]
 async fn get_mods_folder() -> Result<String, String> {
-    let mods_dir = get_lovely_mods_dir(None);
-    Ok(mods_dir.to_string_lossy().into_owned())
+    let config_dir = dirs::config_dir()
+        .ok_or_else(|| AppError::DirNotFound(PathBuf::from("config directory")).to_string())?;
+    Ok(config_dir
+        .join("Balatro")
+        .join("Mods")
+        .to_string_lossy()
+        .into_owned())
 }
 
 #[tauri::command]
@@ -554,7 +557,9 @@ async fn toggle_mod_enabled_by_path(mod_path: String, enabled: bool) -> Result<(
 #[tauri::command]
 async fn process_dropped_file(path: String) -> Result<String, String> {
     // Get the mods directory path
-    let mods_dir = get_lovely_mods_dir(None);
+    let config_dir =
+        dirs::config_dir().ok_or_else(|| "Could not find config directory".to_string())?;
+    let mods_dir = config_dir.join("Balatro").join("Mods");
 
     // Create the mods directory if it doesn't exist
     fs::create_dir_all(&mods_dir).map_err(|e| format!("Failed to create mods directory: {}", e))?;
@@ -671,7 +676,9 @@ fn check_for_lua_files(dir: &PathBuf) -> Result<bool, String> {
 #[tauri::command]
 fn process_mod_archive(filename: String, data: Vec<u8>) -> Result<String, String> {
     // Get the mods directory path
-    let mods_dir = get_lovely_mods_dir(None);
+    let config_dir =
+        dirs::config_dir().ok_or_else(|| "Could not find config directory".to_string())?;
+    let mods_dir = config_dir.join("Balatro").join("Mods");
 
     // Create the mods directory if it doesn't exist
     fs::create_dir_all(&mods_dir).map_err(|e| format!("Failed to create mods directory: {}", e))?;
@@ -991,7 +998,10 @@ fn extract_tar_gz_from_memory(cursor: Cursor<Vec<u8>>, target_dir: &PathBuf) -> 
 
 #[tauri::command]
 async fn refresh_mods_folder(state: tauri::State<'_, AppState>) -> Result<(), String> {
-    let mod_dir = get_lovely_mods_dir(None);
+    let mod_dir = dirs::config_dir()
+        .ok_or_else(|| AppError::DirNotFound(PathBuf::from("config directory")))?
+        .join("Balatro")
+        .join("Mods");
 
     let db = state
         .db
@@ -1152,9 +1162,7 @@ async fn launch_balatro(state: tauri::State<'_, AppState>) -> Result<(), String>
 
         // If version.dll doesn't exist, download it
         if !dll_path.exists() {
-            lovely::ensure_version_dll_exists(&path)
-                .await
-                .inspect_err(|_| log::error!("Failed to install `lovely`"))?;
+            lovely::ensure_version_dll_exists(&path).await?;
         }
 
         // Launch the game
@@ -1174,136 +1182,7 @@ async fn launch_balatro(state: tauri::State<'_, AppState>) -> Result<(), String>
         log::debug!("Launched game from {}", exe_path.display());
     }
 
-    #[cfg(target_os = "linux")]
-    {
-        // Ensure version.dll exists in the game directory
-        let dll_path = path.join("version.dll");
-        if !dll_path.exists() {
-            lovely::ensure_version_dll_exists(&path)
-                .await
-                .inspect_err(|_| log::error!("Failed to install `lovely`"))?;
-        }
-
-        // Try to launch through Steam first (preferred method for Proton)
-        let app_id = "2379780"; // Balatro's Steam AppID
-
-        // Try with steam URL protocol first
-        let url_handler = Command::new("xdg-mime")
-            .arg("query")
-            .arg("default")
-            .arg("x-scheme-handler/steam")
-            .output()
-            .map_err(|e| format!("Failed to query `steam://` handler: {}", e))
-            .and_then(|output| {
-                let output = String::from_utf8_lossy(&output.stdout);
-                if output.trim().is_empty() {
-                    return Err("No default `steam://` handler found".to_string());
-                }
-                if output.trim() != "steam.desktop" {
-                    log::warn!(
-                        "The system's default `steam://` handler is {} instead of steam",
-                        output
-                    );
-                }
-                Ok(())
-            });
-
-        if url_handler.is_ok() {
-            let _ = Command::new("xdg-open")
-                .arg(format!("steam://run/{}", app_id))
-                .spawn();
-            log::debug!("Launched Balatro through Steam URL protocol");
-            return Ok(());
-        }
-
-        // Try with Steam executable directly as fallback
-        let steam_result = which::which("steam").map(|steam_path| {
-            let mut command = Command::new(steam_path);
-            if !lovely_console_enabled {
-                // Pass console disable flag through Steam launch options
-                command.args(["-applaunch", app_id, "--", "--disable-console"]);
-            } else {
-                command.args(["-applaunch", app_id]);
-            }
-            command.spawn()
-        });
-
-        if let Ok(Ok(_)) = steam_result {
-            log::debug!("Launched Balatro through Steam executable");
-            return Ok(());
-        }
-
-        // Last resort: try direct launch with WINEDLLOVERRIDES
-        let exe_path = find_executable_in_directory(&path)
-            .ok_or_else(|| format!("No executable found in {}", path.display()))?;
-
-        let mut command = Command::new(&exe_path);
-        command
-            .current_dir(&path)
-            .env("WINEDLLOVERRIDES", "version=n,b");
-
-        if !lovely_console_enabled {
-            command.arg("--disable-console");
-        }
-
-        command
-            .spawn()
-            .map_err(|e| format!("Failed to launch {}: {}", exe_path.display(), e))?;
-
-        log::debug!("Launched Balatro directly with WINEDLLOVERRIDES");
-    }
-
     Ok(())
-}
-
-// Add this helper function for Linux if it doesn't exist already
-#[cfg(target_os = "linux")]
-fn find_executable_in_directory(dir: &PathBuf) -> Option<PathBuf> {
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        let mut executables: Vec<PathBuf> = Vec::new();
-
-        // Collect all executable files
-        for entry in entries.filter_map(Result::ok) {
-            let path = entry.path();
-            if path.is_file() {
-                // Check if file is executable on Linux
-                if let Ok(metadata) = std::fs::metadata(&path) {
-                    use std::os::unix::fs::PermissionsExt;
-                    let permissions = metadata.permissions();
-                    if permissions.mode() & 0o111 != 0 {
-                        executables.push(path);
-                    }
-                }
-            }
-        }
-
-        if executables.is_empty() {
-            return None;
-        }
-
-        // First look for any executable with "balatro" in the name
-        for exe in &executables {
-            if let Some(file_name) = exe.file_name().and_then(|n| n.to_str()) {
-                if file_name.to_lowercase().contains("balatro") {
-                    return Some(exe.clone());
-                }
-            }
-        }
-
-        // Then look for "love" executable
-        for exe in &executables {
-            if let Some(file_name) = exe.file_name().and_then(|n| n.to_str()) {
-                if file_name.to_lowercase() == "love" {
-                    return Some(exe.clone());
-                }
-            }
-        }
-
-        // If no specific executable was found, return the first one
-        return Some(executables[0].clone());
-    }
-
-    None
 }
 
 #[cfg(target_os = "windows")]
@@ -1382,11 +1261,7 @@ async fn check_existing_installation(
 
 #[allow(non_snake_case)]
 #[tauri::command]
-async fn install_mod(
-    state: tauri::State<'_, AppState>,
-    url: String,
-    folderName: String,
-) -> Result<PathBuf, String> {
+async fn install_mod(url: String, folderName: String) -> Result<PathBuf, String> {
     let folderName = {
         if folderName.is_empty() {
             None
@@ -1394,21 +1269,7 @@ async fn install_mod(
             Some(folderName)
         }
     };
-
-    #[cfg(not(target_os = "linux"))]
-    return map_error(bmm_lib::installer::install_mod(None, url, folderName).await);
-
-    #[cfg(target_os = "linux")]
-    {
-        let installation_path = state
-            .db
-            .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?;
-        return map_error(
-            bmm_lib::installer::install_mod(installation_path.as_ref(), url, folderName).await,
-        );
-    };
+    map_error(bmm_lib::installer::install_mod(url, folderName).await)
 }
 
 #[tauri::command]
@@ -1447,19 +1308,8 @@ async fn force_remove_mod(
     name: String,
     path: String,
 ) -> Result<(), String> {
+    map_error(bmm_lib::installer::uninstall_mod(PathBuf::from(path)))?;
     let db = state.db.lock().map_err(|e| e.to_string())?;
-
-    #[cfg(not(target_os = "linux"))]
-    map_error(bmm_lib::installer::uninstall_mod(None, PathBuf::from(path)))?;
-    #[cfg(target_os = "linux")]
-    {
-        let installation_path = db.get_installation_path()?;
-        map_error(bmm_lib::installer::uninstall_mod(
-            installation_path.as_ref(),
-            PathBuf::from(path),
-        ))?;
-    };
-
     map_error(db.remove_installed_mod(&name))
 }
 
@@ -1503,7 +1353,10 @@ async fn delete_manual_mod(path: String) -> Result<(), String> {
         ));
     }
 
-    let mods_dir = get_lovely_mods_dir(None);
+    let config_dir =
+        dirs::config_dir().ok_or_else(|| "Could not find config directory".to_string())?;
+
+    let mods_dir = config_dir.join("Balatro").join("Mods");
 
     // Security check: Make sure the path is within the Mods directory
     let canonicalized_path = match path.canonicalize() {
@@ -1597,19 +1450,9 @@ async fn cascade_uninstall(
         to_uninstall.extend(dependents);
 
         // Perform actual uninstall
-        #[cfg(not(target_os = "linux"))]
-        map_error(bmm_lib::installer::uninstall_mod(
-            None,
-            PathBuf::from(mod_details.path),
-        ))?;
-        #[cfg(target_os = "linux")]
-        {
-            let installation_path = db.get_installation_path()?;
-            map_error(bmm_lib::installer::uninstall_mod(
-                installation_path.as_ref(),
-                PathBuf::from(mod_details.path),
-            ))?;
-        };
+        map_error(bmm_lib::installer::uninstall_mod(PathBuf::from(
+            mod_details.path,
+        )))?;
         map_error(db.remove_installed_mod(&current))?;
     }
 
@@ -1645,17 +1488,7 @@ async fn remove_installed_mod(
         }
     }
 
-    #[cfg(not(target_os = "linux"))]
-    map_error(bmm_lib::installer::uninstall_mod(None, PathBuf::from(path)))?;
-    #[cfg(target_os = "linux")]
-    {
-        let installation_path = db.get_installation_path()?;
-        map_error(bmm_lib::installer::uninstall_mod(
-            installation_path.as_ref(),
-            PathBuf::from(path),
-        ))?;
-    };
-
+    map_error(bmm_lib::installer::uninstall_mod(PathBuf::from(path)))?;
     map_error(db.remove_installed_mod(&name))
 }
 
@@ -1958,7 +1791,13 @@ async fn set_background_state(
 
 #[tauri::command]
 async fn verify_path_exists(path: String) -> bool {
-    PathBuf::from(path).exists()
+    match std::fs::exists(PathBuf::from(path)) {
+        Ok(exists) => exists,
+        Err(e) => {
+            log::error!("Failed to check path existence: {}", e);
+            false
+        }
+    }
 }
 
 #[tauri::command]
@@ -2022,11 +1861,6 @@ fn exit_application(app_handle: tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Set up panic hook with proper logging
-    // panic::set_hook(Box::new(|panic_info| {
-    //     log::error!("Application crashed: {:?}", panic_info);
-    // }));
-
     let result = tauri::Builder::default()
         .plugin(
             tauri_plugin_window_state::Builder::default()
