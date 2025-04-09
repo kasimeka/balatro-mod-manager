@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - release
+      - 66-linux-support
 
 jobs:
   build-tauri:
