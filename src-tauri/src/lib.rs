@@ -12,13 +12,8 @@ use tauri_plugin_window_state::StateFlags;
 use walkdir::WalkDir;
 use zip::ZipArchive;
 
-// use tauri::WebviewUrl;
-// use tauri::WebviewWindowBuilder;
-// use std::collections::HashMap;
-//
 use std::collections::HashSet;
 use std::fs::File;
-// use std::panic;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
@@ -102,30 +97,24 @@ async fn mod_update_available(
         .get_last_installed_version(&mod_name)
         .map_err(|e| e.to_string())?;
 
-    // If no version is installed, we can't determine if an update is available
     if last_installed_version.is_empty() {
         return Ok(false);
     }
 
-    // Try to get the cached mods
     let cached_mods = match crate::cache::load_cache().map_err(|e| e.to_string())? {
         Some((mods, _)) => mods,
-        None => return Ok(false), // No cache available
+        None => return Ok(false),
     };
 
-    // Look for the mod in the cache by matching either title or folderName
     for cached_mod in cached_mods {
         if cached_mod.title == mod_name || (cached_mod.folderName.as_ref() == Some(&mod_name)) {
-            // If we found a match and it has a version, compare versions
             if let Some(remote_version) = cached_mod.version {
-                // If versions are different, consider an update available
                 return Ok(remote_version != last_installed_version);
             }
-            break; // Found the mod but it has no version info
+            break;
         }
     }
 
-    // No update found or couldn't determine
     Ok(false)
 }
 
@@ -161,7 +150,6 @@ async fn get_mod_thumbnail(modPath: String) -> Result<Option<String>, String> {
         .join(modPath)
         .join("thumbnail.jpg");
 
-    // Read the image file
     let image_data = match std::fs::read(&full_path) {
         Ok(data) => data,
         Err(_) => {
@@ -169,27 +157,22 @@ async fn get_mod_thumbnail(modPath: String) -> Result<Option<String>, String> {
         }
     };
 
-    // Convert to base64
     let base64 = STANDARD.encode(image_data);
     Ok(Some(format!("data:image/jpeg;base64,{}", base64)))
 }
 
 #[tauri::command]
 async fn pull_repo(path: &str) -> Result<(), String> {
-    // Check if directory exists
     let path_buf = PathBuf::from(path);
     if !path_buf.exists() {
         return Err(format!("Directory '{}' does not exist", path));
     }
 
-    // Check if it's a repository
     if !github_repo::is_repository_directory(path) {
-        // Auto-clone if it doesn't look like a repository
-        let repo_url = "https://github.com/skyline69/balatro-mod-index"; // Default repository URL
+        let repo_url = "https://github.com/skyline69/balatro-mod-index";
         return github_repo::clone_repository(repo_url, path).await;
     }
 
-    // Proceed with pull if it's a valid repository
     github_repo::pull_repository(path).await
 }
 
@@ -348,38 +331,42 @@ async fn check_untracked_mods() -> Result<bool, String> {
 
 #[tauri::command]
 async fn get_mods_folder(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
 ) -> Result<String, String> {
     #[cfg(not(target_os = "linux"))]
     let mods_dir = get_lovely_mods_dir(None);
     #[cfg(target_os = "linux")]
-    let mods_dir = get_lovely_mods_dir(
-        state
+    let mods_dir = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        get_lovely_mods_dir(installation_path.as_ref())
+    };
     Ok(mods_dir.to_string_lossy().into_owned())
 }
 
 #[tauri::command]
 async fn is_mod_enabled(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
     mod_name: String,
 ) -> Result<bool, String> {
     #[cfg(not(target_os = "linux"))]
     let mods_dir = get_lovely_mods_dir(None);
     #[cfg(target_os = "linux")]
-    let mods_dir = get_lovely_mods_dir(
-        state
+    let mods_dir = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        get_lovely_mods_dir(installation_path.as_ref())
+    };
 
     let mod_dir = mods_dir.join(&mod_name);
     let ignore_file_path = mod_dir.join(".lovelyignore");
@@ -389,21 +376,23 @@ async fn is_mod_enabled(
 
 #[tauri::command]
 async fn toggle_mod_enabled(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
     mod_name: String,
     enabled: bool,
 ) -> Result<(), String> {
     #[cfg(not(target_os = "linux"))]
     let mods_dir = get_lovely_mods_dir(None);
     #[cfg(target_os = "linux")]
-    let mods_dir = get_lovely_mods_dir(
-        state
+    let mods_dir = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        get_lovely_mods_dir(installation_path.as_ref())
+    };
 
     let mod_dir = mods_dir.join(&mod_name);
 
@@ -464,20 +453,22 @@ async fn toggle_mod_enabled_by_path(mod_path: String, enabled: bool) -> Result<(
 
 #[tauri::command]
 async fn process_dropped_file(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
     path: String,
 ) -> Result<String, String> {
     #[cfg(not(target_os = "linux"))]
     let mods_dir = get_lovely_mods_dir(None);
     #[cfg(target_os = "linux")]
-    let mods_dir = get_lovely_mods_dir(
-        state
+    let mods_dir = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        get_lovely_mods_dir(installation_path.as_ref())
+    };
 
     fs::create_dir_all(&mods_dir).map_err(|e| format!("Failed to create mods directory: {}", e))?;
 
@@ -521,13 +512,11 @@ async fn process_dropped_file(
 
         if dirs.len() == 1 && fs::read_dir(&mod_dir).map(|e| e.count()).unwrap_or(0) == 1 {
             let nested_dir = dirs[0].path();
-
             for entry in fs::read_dir(&nested_dir)
                 .map_err(|e| format!("Failed to read nested directory: {}", e))?
             {
                 let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
                 let target_path = mod_dir.join(entry.file_name());
-
                 if entry
                     .file_type()
                     .map_err(|e| format!("Failed to get file type: {}", e))?
@@ -540,7 +529,6 @@ async fn process_dropped_file(
                         .map_err(|e| format!("Failed to move file: {}", e))?;
                 }
             }
-
             fs::remove_dir_all(&nested_dir)
                 .map_err(|e| format!("Failed to remove nested directory: {}", e))?;
         }
@@ -562,21 +550,23 @@ async fn process_dropped_file(
 
 #[tauri::command]
 fn process_mod_archive(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
     filename: String,
     data: Vec<u8>,
 ) -> Result<String, String> {
     #[cfg(not(target_os = "linux"))]
     let mods_dir = get_lovely_mods_dir(None);
     #[cfg(target_os = "linux")]
-    let mods_dir = get_lovely_mods_dir(
-        state
+    let mods_dir = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        get_lovely_mods_dir(installation_path.as_ref())
+    };
 
     fs::create_dir_all(&mods_dir).map_err(|e| format!("Failed to create mods directory: {}", e))?;
 
@@ -615,13 +605,11 @@ fn process_mod_archive(
 
         if dirs.len() == 1 && fs::read_dir(&mod_dir).map(|e| e.count()).unwrap_or(0) == 1 {
             let nested_dir = dirs[0].path();
-
             for entry in fs::read_dir(&nested_dir)
                 .map_err(|e| format!("Failed to read nested directory: {}", e))?
             {
                 let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
                 let target_path = mod_dir.join(entry.file_name());
-
                 if entry
                     .file_type()
                     .map_err(|e| format!("Failed to get file type: {}", e))?
@@ -634,7 +622,6 @@ fn process_mod_archive(
                         .map_err(|e| format!("Failed to move file: {}", e))?;
                 }
             }
-
             fs::remove_dir_all(&nested_dir)
                 .map_err(|e| format!("Failed to remove nested directory: {}", e))?;
         }
@@ -837,7 +824,10 @@ async fn refresh_mods_folder(state: tauri::State<'_, AppState>) -> Result<(), St
     #[cfg(not(target_os = "linux"))]
     let mods_dir = get_lovely_mods_dir(None);
     #[cfg(target_os = "linux")]
-    let mods_dir = get_lovely_mods_dir(db.get_installation_path()?.as_ref());
+    let mods_dir = {
+        let installation_path = db.get_installation_path()?;
+        get_lovely_mods_dir(installation_path.as_ref())
+    };
 
     let entries = std::fs::read_dir(&mods_dir).map_err(|e| AppError::FileRead {
         path: mods_dir.clone(),
@@ -1161,7 +1151,8 @@ async fn check_existing_installation(
 #[allow(non_snake_case)]
 #[tauri::command]
 async fn install_mod(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
     url: String,
     folderName: String,
 ) -> Result<PathBuf, String> {
@@ -1172,19 +1163,24 @@ async fn install_mod(
             Some(folderName)
         }
     };
+
     #[cfg(not(target_os = "linux"))]
     return map_error(bmm_lib::installer::install_mod(None, url, folderName).await);
+
     #[cfg(target_os = "linux")]
     {
-        let installation_path = state
-            .db
-            .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?;
+        // Use state only on Linux
+        let installation_path = {
+            let db_lock = _state
+                .db
+                .lock()
+                .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+            db_lock.get_installation_path()?
+        };
         return map_error(
             bmm_lib::installer::install_mod(installation_path.as_ref(), url, folderName).await,
         );
-    };
+    }
 }
 
 #[tauri::command]
@@ -1260,7 +1256,8 @@ async fn reindex_mods(state: tauri::State<'_, AppState>) -> Result<(usize, usize
 
 #[tauri::command]
 async fn delete_manual_mod(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
     path: String,
 ) -> Result<(), String> {
     let path = PathBuf::from(path);
@@ -1273,14 +1270,15 @@ async fn delete_manual_mod(
     #[cfg(not(target_os = "linux"))]
     let mods_dir = get_lovely_mods_dir(None);
     #[cfg(target_os = "linux")]
-    let mods_dir = get_lovely_mods_dir(
-        state
+    let mods_dir = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        get_lovely_mods_dir(installation_path.as_ref())
+    };
     let canonicalized_path = match path.canonicalize() {
         Ok(p) => p,
         Err(e) => {
@@ -1347,14 +1345,19 @@ async fn cascade_uninstall(
     let db = state.db.lock().map_err(|e| e.to_string())?;
     let mut to_uninstall = vec![root_mod.clone()];
     let mut processed = HashSet::new();
+
     while let Some(current) = to_uninstall.pop() {
-        if processed.contains(¤t) {
+        // Fix typo: current instead of t
+        if processed.contains(&current) {
+            // Fix typo: current instead of t
             continue;
         }
         processed.insert(current.clone());
-        let mod_details = map_error(db.get_mod_details(¤t))?;
-        let dependents = map_error(db.get_dependents(¤t))?;
+
+        let mod_details = map_error(db.get_mod_details(&current))?; // Fix typo: current instead of t
+        let dependents = map_error(db.get_dependents(&current))?; // Fix typo: current instead of t
         to_uninstall.extend(dependents);
+
         #[cfg(not(target_os = "linux"))]
         map_error(bmm_lib::installer::uninstall_mod(
             None,
@@ -1368,8 +1371,9 @@ async fn cascade_uninstall(
                 PathBuf::from(mod_details.path),
             ))?;
         };
-        map_error(db.remove_installed_mod(¤t))?;
+        map_error(db.remove_installed_mod(&current))?; // Fix typo: current instead of t
     }
+
     Ok(())
 }
 
@@ -1438,20 +1442,21 @@ async fn find_steam_balatro(state: tauri::State<'_, AppState>) -> Result<Vec<Str
 
 #[tauri::command]
 async fn get_steamodded_versions(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
 ) -> Result<Vec<String>, String> {
     #[cfg(not(target_os = "linux"))]
     let installer = ModInstaller::new(None, ModType::Steamodded);
     #[cfg(target_os = "linux")]
-    let installer = ModInstaller::new(
-        state
+    let installer = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-        ModType::Steamodded,
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        ModInstaller::new(installation_path.as_ref(), ModType::Steamodded)
+    };
     installer
         .get_available_versions()
         .await
@@ -1461,21 +1466,22 @@ async fn get_steamodded_versions(
 
 #[tauri::command]
 async fn install_steamodded_version(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
     version: String,
 ) -> Result<String, String> {
     #[cfg(not(target_os = "linux"))]
     let installer = ModInstaller::new(None, ModType::Steamodded);
     #[cfg(target_os = "linux")]
-    let installer = ModInstaller::new(
-        state
+    let installer = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-        ModType::Steamodded,
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        ModInstaller::new(installation_path.as_ref(), ModType::Steamodded)
+    };
     installer
         .install_version(&version)
         .await
@@ -1484,20 +1490,21 @@ async fn install_steamodded_version(
 
 #[tauri::command]
 async fn get_talisman_versions(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
 ) -> Result<Vec<String>, String> {
     #[cfg(not(target_os = "linux"))]
-    let installer = ModInstaller::new(None, ModType::Talisman);
+    let installer = ModInstaller::new(None, ModType::Talisman); // Corrected ModType
     #[cfg(target_os = "linux")]
-    let installer = ModInstaller::new(
-        state
+    let installer = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-        ModType::Talisman,
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        ModInstaller::new(installation_path.as_ref(), ModType::Talisman) // Corrected ModType
+    };
     installer
         .get_available_versions()
         .await
@@ -1507,7 +1514,8 @@ async fn get_talisman_versions(
 
 #[tauri::command]
 async fn get_latest_steamodded_release(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
 ) -> Result<String, String> {
     if let Ok(Some(versions)) = cache::load_versions_cache("steamodded") {
         if !versions.is_empty() {
@@ -1521,52 +1529,51 @@ async fn get_latest_steamodded_release(
     #[cfg(not(target_os = "linux"))]
     let installer = ModInstaller::new(None, ModType::Steamodded);
     #[cfg(target_os = "linux")]
-    let installer = ModInstaller::new(
-        state
+    let installer = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-        ModType::Steamodded,
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        ModInstaller::new(installation_path.as_ref(), ModType::Steamodded)
+    };
     installer
         .get_latest_release()
         .await
-        .map(|version| {
-            match installer.mod_type {
-                ModType::Steamodded => {
-                    format!(
-                        "https://github.com/Steamodded/smods/archive/refs/tags/{}.zip",
-                        version
-                    )
-                }
-                _ => format!(
+        .map(|version| match installer.mod_type {
+            ModType::Steamodded => {
+                format!(
                     "https://github.com/Steamodded/smods/archive/refs/tags/{}.zip",
                     version
-                ),
+                )
             }
+            _ => format!(
+                "https://github.com/Steamodded/smods/archive/refs/tags/{}.zip",
+                version
+            ),
         })
         .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 async fn install_talisman_version(
-    #[cfg(target_os = "linux")] state: tauri::State<'_, AppState>,
+    // Make state unconditional
+    _state: tauri::State<'_, AppState>,
     version: String,
 ) -> Result<String, String> {
     #[cfg(not(target_os = "linux"))]
-    let installer = ModInstaller::new(None, ModType::Talisman);
+    let installer = ModInstaller::new(None, ModType::Talisman); // Corrected ModType
     #[cfg(target_os = "linux")]
-    let installer = ModInstaller::new(
-        state
+    let installer = {
+        // Use state only on Linux
+        let db_lock = _state
             .db
             .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
-            .get_installation_path()?
-            .as_ref(),
-        ModType::Talisman,
-    );
+            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
+        let installation_path = db_lock.get_installation_path()?;
+        ModInstaller::new(installation_path.as_ref(), ModType::Talisman) // Corrected ModType
+    };
     installer
         .install_version(&version)
         .await
@@ -1849,7 +1856,6 @@ pub fn run() {
             get_discord_rpc_status,
             set_discord_rpc_status,
             get_latest_steamodded_release,
-            set_discord_rpc_status,
             mod_update_available,
             get_detected_local_mods,
             delete_manual_mod,
