@@ -12,10 +12,6 @@ use tauri_plugin_window_state::StateFlags;
 use walkdir::WalkDir;
 use zip::ZipArchive;
 
-// use tauri::WebviewUrl;
-// use tauri::WebviewWindowBuilder;
-// use std::collections::HashMap;
-//
 use std::collections::HashSet;
 use std::fs::File;
 use std::path::Path;
@@ -100,30 +96,24 @@ async fn mod_update_available(
         .get_last_installed_version(&mod_name)
         .map_err(|e| e.to_string())?;
 
-    // If no version is installed, we can't determine if an update is available
     if last_installed_version.is_empty() {
         return Ok(false);
     }
 
-    // Try to get the cached mods
     let cached_mods = match crate::cache::load_cache().map_err(|e| e.to_string())? {
         Some((mods, _)) => mods,
-        None => return Ok(false), // No cache available
+        None => return Ok(false),
     };
 
-    // Look for the mod in the cache by matching either title or folderName
     for cached_mod in cached_mods {
         if cached_mod.title == mod_name || (cached_mod.folderName.as_ref() == Some(&mod_name)) {
-            // If we found a match and it has a version, compare versions
             if let Some(remote_version) = cached_mod.version {
-                // If versions are different, consider an update available
                 return Ok(remote_version != last_installed_version);
             }
-            break; // Found the mod but it has no version info
+            break;
         }
     }
 
-    // No update found or couldn't determine
     Ok(false)
 }
 
@@ -159,7 +149,6 @@ async fn get_mod_thumbnail(modPath: String) -> Result<Option<String>, String> {
         .join(modPath)
         .join("thumbnail.jpg");
 
-    // Read the image file
     let image_data = match std::fs::read(&full_path) {
         Ok(data) => data,
         Err(_) => {
@@ -167,7 +156,6 @@ async fn get_mod_thumbnail(modPath: String) -> Result<Option<String>, String> {
         }
     };
 
-    // Convert to base64
     let base64 = STANDARD.encode(image_data);
     Ok(Some(format!("data:image/jpeg;base64,{}", base64)))
 }
@@ -180,20 +168,16 @@ async fn get_mod_thumbnail(modPath: String) -> Result<Option<String>, String> {
 
 #[tauri::command]
 async fn pull_repo(path: &str) -> Result<(), String> {
-    // Check if directory exists
     let path_buf = PathBuf::from(path);
     if !path_buf.exists() {
         return Err(format!("Directory '{}' does not exist", path));
     }
 
-    // Check if it's a repository
     if !github_repo::is_repository_directory(path) {
-        // Auto-clone if it doesn't look like a repository
-        let repo_url = "https://github.com/skyline69/balatro-mod-index"; // Default repository URL
+        let repo_url = "https://github.com/skyline69/balatro-mod-index";
         return github_repo::clone_repository(repo_url, path).await;
     }
 
-    // Proceed with pull if it's a valid repository
     github_repo::pull_repository(path).await
 }
 
@@ -619,7 +603,6 @@ async fn process_dropped_file(path: String) -> Result<String, String> {
             {
                 let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
                 let target_path = mod_dir.join(entry.file_name());
-
                 if entry
                     .file_type()
                     .map_err(|e| format!("Failed to get file type: {}", e))?
@@ -668,7 +651,6 @@ fn check_for_lua_files(dir: &PathBuf) -> Result<bool, String> {
             }
         }
     }
-
     Ok(false)
 }
 
@@ -724,13 +706,11 @@ fn process_mod_archive(filename: String, data: Vec<u8>) -> Result<String, String
 
         if dirs.len() == 1 && fs::read_dir(&mod_dir).map(|e| e.count()).unwrap_or(0) == 1 {
             let nested_dir = dirs[0].path();
-
             for entry in fs::read_dir(&nested_dir)
                 .map_err(|e| format!("Failed to read nested directory: {}", e))?
             {
                 let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
                 let target_path = mod_dir.join(entry.file_name());
-
                 if entry
                     .file_type()
                     .map_err(|e| format!("Failed to get file type: {}", e))?
@@ -743,7 +723,6 @@ fn process_mod_archive(filename: String, data: Vec<u8>) -> Result<String, String
                         .map_err(|e| format!("Failed to move file: {}", e))?;
                 }
             }
-
             fs::remove_dir_all(&nested_dir)
                 .map_err(|e| format!("Failed to remove nested directory: {}", e))?;
         }
@@ -1437,23 +1416,23 @@ async fn cascade_uninstall(
     let mut processed = HashSet::new();
 
     while let Some(current) = to_uninstall.pop() {
-        if processed.contains(&current) {
+        if processed.contains(¤t) {
             continue;
         }
         processed.insert(current.clone());
 
         // Get mod details
-        let mod_details = map_error(db.get_mod_details(&current))?;
+        let mod_details = map_error(db.get_mod_details(¤t))?;
 
         // Add dependents to queue
-        let dependents = map_error(db.get_dependents(&current))?;
+        let dependents = map_error(db.get_dependents(¤t))?;
         to_uninstall.extend(dependents);
 
         // Perform actual uninstall
         map_error(bmm_lib::installer::uninstall_mod(PathBuf::from(
             mod_details.path,
         )))?;
-        map_error(db.remove_installed_mod(&current))?;
+        map_error(db.remove_installed_mod(¤t))?;
     }
 
     Ok(())
@@ -1791,7 +1770,7 @@ async fn set_background_state(
 
 #[tauri::command]
 async fn verify_path_exists(path: String) -> bool {
-    match std::fs::exists(PathBuf::from(path)) {
+    match std::fs::try_exists(PathBuf::from(path)) { // Changed to try_exists
         Ok(exists) => exists,
         Err(e) => {
             log::error!("Failed to check path existence: {}", e);
@@ -1954,7 +1933,6 @@ pub fn run() {
             get_discord_rpc_status,
             set_discord_rpc_status,
             get_latest_steamodded_release,
-            set_discord_rpc_status,
             mod_update_available,
             get_detected_local_mods,
             delete_manual_mod,
