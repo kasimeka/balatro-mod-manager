@@ -1248,7 +1248,7 @@ async fn install_mod(url: String, folderName: String) -> Result<PathBuf, String>
             Some(folderName)
         }
     };
-    map_error(bmm_lib::installer::install_mod(url, folderName).await)
+    map_error(bmm_lib::installer::install_mod(None, url, folderName).await)
 }
 
 #[tauri::command]
@@ -1287,7 +1287,7 @@ async fn force_remove_mod(
     name: String,
     path: String,
 ) -> Result<(), String> {
-    map_error(bmm_lib::installer::uninstall_mod(PathBuf::from(path)))?;
+    map_error(bmm_lib::installer::uninstall_mod(None, PathBuf::from(path)))?;
     let db = state.db.lock().map_err(|e| e.to_string())?;
     map_error(db.remove_installed_mod(&name))
 }
@@ -1416,23 +1416,23 @@ async fn cascade_uninstall(
     let mut processed = HashSet::new();
 
     while let Some(current) = to_uninstall.pop() {
-        if processed.contains(¤t) {
+        if processed.contains(&current) {
             continue;
         }
         processed.insert(current.clone());
 
         // Get mod details
-        let mod_details = map_error(db.get_mod_details(¤t))?;
+        let mod_details = map_error(db.get_mod_details(&current))?;
 
         // Add dependents to queue
-        let dependents = map_error(db.get_dependents(¤t))?;
+        let dependents = map_error(db.get_dependents(&current))?;
         to_uninstall.extend(dependents);
 
         // Perform actual uninstall
-        map_error(bmm_lib::installer::uninstall_mod(PathBuf::from(
+        map_error(bmm_lib::installer::uninstall_mod(None, PathBuf::from(
             mod_details.path,
         )))?;
-        map_error(db.remove_installed_mod(¤t))?;
+        map_error(db.remove_installed_mod(&current))?;
     }
 
     Ok(())
@@ -1467,7 +1467,7 @@ async fn remove_installed_mod(
         }
     }
 
-    map_error(bmm_lib::installer::uninstall_mod(PathBuf::from(path)))?;
+    map_error(bmm_lib::installer::uninstall_mod(None, PathBuf::from(path)))?;
     map_error(db.remove_installed_mod(&name))
 }
 
@@ -1502,7 +1502,7 @@ async fn find_steam_balatro(state: tauri::State<'_, AppState>) -> Result<Vec<Str
 
 #[tauri::command]
 async fn get_steamodded_versions() -> Result<Vec<String>, String> {
-    let installer = ModInstaller::new(ModType::Steamodded);
+    let installer = ModInstaller::new(None, ModType::Steamodded);
     installer
         .get_available_versions()
         .await
@@ -1512,7 +1512,7 @@ async fn get_steamodded_versions() -> Result<Vec<String>, String> {
 
 #[tauri::command]
 async fn install_steamodded_version(version: String) -> Result<String, String> {
-    let installer = ModInstaller::new(ModType::Steamodded);
+    let installer = ModInstaller::new(None, ModType::Steamodded);
     installer
         .install_version(&version)
         .await
@@ -1521,7 +1521,7 @@ async fn install_steamodded_version(version: String) -> Result<String, String> {
 
 #[tauri::command]
 async fn get_talisman_versions() -> Result<Vec<String>, String> {
-    let installer = ModInstaller::new(ModType::Talisman);
+    let installer = ModInstaller::new(None, ModType::Talisman);
     installer
         .get_available_versions()
         .await
@@ -1544,7 +1544,7 @@ async fn get_latest_steamodded_release() -> Result<String, String> {
     }
 
     // If cache miss or empty, fetch from network
-    let installer = ModInstaller::new(ModType::Steamodded);
+    let installer = ModInstaller::new(None, ModType::Steamodded);
     installer
         .get_latest_release()
         .await
@@ -1569,7 +1569,7 @@ async fn get_latest_steamodded_release() -> Result<String, String> {
 
 #[tauri::command]
 async fn install_talisman_version(version: String) -> Result<String, String> {
-    let installer = ModInstaller::new(ModType::Talisman);
+    let installer = ModInstaller::new(None, ModType::Talisman);
     installer
         .install_version(&version)
         .await
@@ -1770,7 +1770,7 @@ async fn set_background_state(
 
 #[tauri::command]
 async fn verify_path_exists(path: String) -> bool {
-    match std::fs::try_exists(PathBuf::from(path)) { // Changed to try_exists
+    match std::fs::exists(PathBuf::from(path)) { // Changed to try_exists
         Ok(exists) => exists,
         Err(e) => {
             log::error!("Failed to check path existence: {}", e);
