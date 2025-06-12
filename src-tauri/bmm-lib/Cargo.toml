@@ -27,7 +27,7 @@ tar = "0.4.44"
 tauri = "2.5.1"
 tempfile = "3.19.1"
 tokio = { version = "1.45.0", features = ["full"] }
-zip = "2.6.1"
+zip = "4.0.0"
 
 [dev-dependencies]
 tempfile = "3.19.1"

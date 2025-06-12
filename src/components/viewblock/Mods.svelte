@@ -697,7 +697,7 @@
 				path: `${repoPath}/mods`,
 			});
 
-			const mods = (
+			/* const mods = (
 				await Promise.all(
 					modDirs.map(async (dirName) => {
 						try {
@@ -711,7 +711,7 @@
 							]);
 
 							const imageData: string | undefined =
-								await invoke<string>("get_mod_thumbnail", {
+								await invoke<string>("gt_mod_thumbnail", {
 									modPath: dirName,
 								});
 
@@ -752,7 +752,18 @@
 						}
 					}),
 				)
-			).filter((mod): mod is Mod => mod !== null);
+			).filter((mod): mod is Mod => mod !== null); */
+			await invoke("replace_mod_index");
+			try {
+				const mods = await invoke<Mod[]>("get_mod_list").map((mod) => {
+					mod.image = "images/cover.jpg"; // Default image
+					return mod as Mod;
+				})
+				console.log("Fetched mods:", mods);
+			} catch (error) {
+				addMessage("Failed to fetch mod list:", error);
+				return [];
+			}
 
 			await saveToCache(mods);
 			return mods;

@@ -1,5 +1,7 @@
 mod github_repo;
 
+use balatro_mod_index::{forge::Tree, mods::ModIndex};
+
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use flate2::read::GzDecoder;
 use rayon::prelude::*;
@@ -14,6 +16,7 @@ use zip::ZipArchive;
 
 use std::collections::HashSet;
 use std::fs::File;
+use std::mem;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
@@ -24,7 +27,6 @@ use std::{fs, io::Cursor};
 
 use bmm_lib::balamod::find_balatros;
 use bmm_lib::cache;
-use bmm_lib::cache::Mod;
 use bmm_lib::database::Database;
 use bmm_lib::database::InstalledMod;
 use bmm_lib::discord_rpc::DiscordRpcManager;
@@ -40,9 +42,10 @@ fn map_error<T>(result: Result<T, AppError>) -> Result<T, String> {
 }
 
 // Create a state structure to hold the database
-struct AppState {
+struct AppState<'a> {
     db: Mutex<Database>,
     discord_rpc: Mutex<DiscordRpcManager>,
+    index: Mutex<ModIndex<'a>>,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -89,7 +92,7 @@ async fn save_versions_cache(mod_type: String, versions: Vec<String>) -> Result<
 #[tauri::command]
 async fn mod_update_available(
     mod_name: String,
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
 ) -> Result<bool, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     let last_installed_version = db
@@ -214,6 +217,95 @@ async fn list_directories(path: &str) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
+async fn replace_mod_index(state: tauri::State<'_, AppState<'_>>) -> Result<(), String> {
+    let new_index = ModIndex::from_reqwest(&reqwest::Client::new(), <&Tree>::default())
+        .await
+        .map_err(|e| e.to_string())?;
+    let mut index = state.index.lock().map_err(|e| e.to_string())?;
+    let _ = mem::replace(&mut *index, new_index);
+    Ok(())
+}
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, Serialize, Deserialize)]
+enum Category {
+    Content = 0,
+    Joker = 1,
+    QualityOfLife = 2,
+    Technical = 3,
+    Miscellaneous = 4,
+    ResourcePacks = 5,
+    API = 6,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+struct Colors {
+    pub color1: String,
+    pub color2: String,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+struct Mod {
+    pub title: String,
+    pub description: Option<String>,
+    // pub image: String, // omitted on purpose
+    pub categories: Vec<Category>,
+    pub colors: Colors,
+    #[serde(rename = "requires_steamodded")]
+    pub requires_steamodded: bool,
+    #[serde(rename = "requires_talisman")]
+    pub requires_talisman: bool,
+    pub publisher: String,
+    pub repo: String,
+    #[serde(rename = "downloadURL")]
+    pub download_url: String,
+    #[serde(default, rename = "folderName")]
+    pub folder_name: Option<String>,
+    #[serde(default)]
+    pub version: Option<String>,
+    // pub installed: bool, // omitted on purpose
+}
+#[tauri::command]
+async fn get_mod_list(state: tauri::State<'_, AppState<'_>>) -> Result<Vec<Mod>, String> {
+    let index = state.index.lock().map_err(|e| e.to_string())?;
+    Ok({
+        let modlist = index
+            .mods
+            .clone()
+            .into_iter()
+            .map(|(_, m)| Mod {
+                title: m.meta.title,
+                description: m.description,
+                categories: m
+                    .meta
+                    .categories
+                    .iter()
+                    .filter_map(|cat| match cat.as_str() {
+                        "Content" => Some(Category::Content),
+                        "Joker" => Some(Category::Joker),
+                        "Quality of Life" => Some(Category::QualityOfLife),
+                        "Technical" => Some(Category::Technical),
+                        "Miscellaneous" => Some(Category::Miscellaneous),
+                        "Resource Packs" => Some(Category::ResourcePacks),
+                        "API" => Some(Category::API),
+                        _ => None,
+                    })
+                    .collect(),
+                colors: Colors {
+                    color1: String::new(),
+                    color2: String::new(),
+                },
+                requires_steamodded: m.meta.requires_steamodded,
+                requires_talisman: m.meta.requires_talisman,
+                publisher: m.meta.author,
+                repo: m.meta.repo,
+                download_url: m.meta.download_url,
+                folder_name: m.meta.folder_name,
+                version: m.meta.version,
+            })
+            .collect::<Vec<_>>();
+        log::info!("Loaded {} mods from index", modlist.len());
+        modlist
+    })
+}
+
+#[tauri::command]
 async fn read_json_file(path: &str) -> Result<ModMeta, String> {
     let path = PathBuf::from(path);
     let file = File::open(&path).map_err(|e| {
@@ -246,13 +338,13 @@ async fn read_text_file(path: &str) -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn get_last_fetched(state: tauri::State<'_, AppState>) -> Result<u64, String> {
+async fn get_last_fetched(state: tauri::State<'_, AppState<'_>>) -> Result<u64, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     db.get_last_fetched().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-async fn update_last_fetched(state: tauri::State<'_, AppState>) -> Result<(), String> {
+async fn update_last_fetched(state: tauri::State<'_, AppState<'_>>) -> Result<(), String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     db.set_last_fetched(
         SystemTime::now()
@@ -285,7 +377,7 @@ async fn load_versions_cache(mod_type: String) -> Result<Option<(Vec<String>, u6
 }
 
 #[tauri::command]
-async fn save_mods_cache(mods: Vec<Mod>) -> Result<(), String> {
+async fn save_mods_cache(mods: Vec<cache::Mod>) -> Result<(), String> {
     map_error(cache::save_cache(&mods))
 }
 
@@ -303,12 +395,12 @@ fn open_directory(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn load_mods_cache() -> Result<Option<(Vec<Mod>, u64)>, String> {
+async fn load_mods_cache() -> Result<Option<(Vec<cache::Mod>, u64)>, String> {
     map_error(cache::load_cache())
 }
 
 #[tauri::command]
-async fn get_lovely_console_status(state: tauri::State<'_, AppState>) -> Result<bool, String> {
+async fn get_lovely_console_status(state: tauri::State<'_, AppState<'_>>) -> Result<bool, String> {
     let db = state
         .db
         .lock()
@@ -318,7 +410,7 @@ async fn get_lovely_console_status(state: tauri::State<'_, AppState>) -> Result<
 
 #[tauri::command]
 async fn set_lovely_console_status(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     enabled: bool,
 ) -> Result<(), String> {
     let db = state
@@ -347,7 +439,7 @@ async fn get_mods_folder() -> Result<String, String> {
 
 #[tauri::command]
 async fn is_mod_enabled(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     mod_name: String,
 ) -> Result<bool, String> {
     let db = state
@@ -376,7 +468,7 @@ async fn is_mod_enabled(
 
 #[tauri::command]
 async fn toggle_mod_enabled(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     mod_name: String,
     enabled: bool,
 ) -> Result<(), String> {
@@ -976,7 +1068,7 @@ fn extract_tar_gz_from_memory(cursor: Cursor<Vec<u8>>, target_dir: &PathBuf) -> 
 }
 
 #[tauri::command]
-async fn refresh_mods_folder(state: tauri::State<'_, AppState>) -> Result<(), String> {
+async fn refresh_mods_folder(state: tauri::State<'_, AppState<'_>>) -> Result<(), String> {
     let mod_dir = dirs::config_dir()
         .ok_or_else(|| AppError::DirNotFound(PathBuf::from("config directory")))?
         .join("Balatro")
@@ -1037,7 +1129,7 @@ async fn refresh_mods_folder(state: tauri::State<'_, AppState>) -> Result<(), St
 }
 
 #[tauri::command]
-async fn get_discord_rpc_status(state: tauri::State<'_, AppState>) -> Result<bool, String> {
+async fn get_discord_rpc_status(state: tauri::State<'_, AppState<'_>>) -> Result<bool, String> {
     let db = state
         .db
         .lock()
@@ -1047,7 +1139,7 @@ async fn get_discord_rpc_status(state: tauri::State<'_, AppState>) -> Result<boo
 
 #[tauri::command]
 async fn set_discord_rpc_status(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     enabled: bool,
 ) -> Result<(), String> {
     // Step 1: Update database setting
@@ -1070,7 +1162,7 @@ async fn set_discord_rpc_status(
 }
 
 #[tauri::command]
-async fn launch_balatro(state: tauri::State<'_, AppState>) -> Result<(), String> {
+async fn launch_balatro(state: tauri::State<'_, AppState<'_>>) -> Result<(), String> {
     let (path_str, lovely_console_enabled) = {
         let db = state
             .db
@@ -1219,7 +1311,7 @@ async fn check_mod_installation(mod_type: String) -> Result<bool, String> {
 
 #[tauri::command]
 async fn check_existing_installation(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
 ) -> Result<Option<String>, String> {
     let db = state
         .db
@@ -1253,7 +1345,7 @@ async fn install_mod(url: String, folderName: String) -> Result<PathBuf, String>
 
 #[tauri::command]
 async fn get_installed_mods_from_db(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
 ) -> Result<Vec<InstalledMod>, String> {
     let db = state
         .db
@@ -1264,7 +1356,7 @@ async fn get_installed_mods_from_db(
 
 #[tauri::command]
 async fn add_installed_mod(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     name: String,
     path: String,
     dependencies: Vec<String>,
@@ -1283,7 +1375,7 @@ async fn add_installed_mod(
 
 #[tauri::command]
 async fn force_remove_mod(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     name: String,
     path: String,
 ) -> Result<(), String> {
@@ -1294,7 +1386,7 @@ async fn force_remove_mod(
 
 // Update the reindex_mods function to only clean database entries
 #[tauri::command]
-async fn reindex_mods(state: tauri::State<'_, AppState>) -> Result<(usize, usize), String> {
+async fn reindex_mods(state: tauri::State<'_, AppState<'_>>) -> Result<(usize, usize), String> {
     let db = state
         .db
         .lock()
@@ -1382,7 +1474,7 @@ async fn delete_manual_mod(path: String) -> Result<(), String> {
 
 #[tauri::command]
 async fn get_detected_local_mods(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
 ) -> Result<Vec<local_mod_detection::DetectedMod>, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     let cached_mods = match cache::load_cache() {
@@ -1408,7 +1500,7 @@ async fn get_dependents(mod_name: String) -> Result<Vec<String>, String> {
 
 #[tauri::command]
 async fn cascade_uninstall(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     root_mod: String,
 ) -> Result<(), String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
@@ -1429,9 +1521,10 @@ async fn cascade_uninstall(
         to_uninstall.extend(dependents);
 
         // Perform actual uninstall
-        map_error(bmm_lib::installer::uninstall_mod(None, PathBuf::from(
-            mod_details.path,
-        )))?;
+        map_error(bmm_lib::installer::uninstall_mod(
+            None,
+            PathBuf::from(mod_details.path),
+        ))?;
         map_error(db.remove_installed_mod(&current))?;
     }
 
@@ -1440,7 +1533,7 @@ async fn cascade_uninstall(
 
 #[tauri::command]
 async fn remove_installed_mod(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     name: String,
     path: String,
 ) -> Result<(), String> {
@@ -1472,13 +1565,16 @@ async fn remove_installed_mod(
 }
 
 #[tauri::command]
-async fn get_balatro_path(state: tauri::State<'_, AppState>) -> Result<Option<String>, String> {
+async fn get_balatro_path(state: tauri::State<'_, AppState<'_>>) -> Result<Option<String>, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     map_error(db.get_installation_path())
 }
 
 #[tauri::command]
-async fn set_balatro_path(state: tauri::State<'_, AppState>, path: String) -> Result<(), String> {
+async fn set_balatro_path(
+    state: tauri::State<'_, AppState<'_>>,
+    path: String,
+) -> Result<(), String> {
     let db = match state.db.lock() {
         Ok(db) => db,
         Err(e) => return Err(e.to_string()),
@@ -1487,7 +1583,7 @@ async fn set_balatro_path(state: tauri::State<'_, AppState>, path: String) -> Re
 }
 
 #[tauri::command]
-async fn find_steam_balatro(state: tauri::State<'_, AppState>) -> Result<Vec<String>, String> {
+async fn find_steam_balatro(state: tauri::State<'_, AppState<'_>>) -> Result<Vec<String>, String> {
     let balatros = find_balatros();
     if let Some(path) = balatros.first() {
         let db = state.db.lock().map_err(|e| e.to_string())?;
@@ -1754,14 +1850,14 @@ fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
 }
 
 #[tauri::command]
-async fn get_background_state(state: tauri::State<'_, AppState>) -> Result<bool, String> {
+async fn get_background_state(state: tauri::State<'_, AppState<'_>>) -> Result<bool, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     map_error(db.get_background_enabled())
 }
 
 #[tauri::command]
 async fn set_background_state(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     enabled: bool,
 ) -> Result<(), String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
@@ -1770,7 +1866,8 @@ async fn set_background_state(
 
 #[tauri::command]
 async fn verify_path_exists(path: String) -> bool {
-    match std::fs::exists(PathBuf::from(path)) { // Changed to try_exists
+    match std::fs::exists(PathBuf::from(path)) {
+        // Changed to try_exists
         Ok(exists) => exists,
         Err(e) => {
             log::error!("Failed to check path existence: {}", e);
@@ -1787,7 +1884,7 @@ async fn path_exists(path: String) -> Result<bool, String> {
 
 #[tauri::command]
 async fn check_custom_balatro(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     path: String,
 ) -> Result<bool, String> {
     let path = PathBuf::from(&path);
@@ -1813,7 +1910,7 @@ async fn check_custom_balatro(
 
 #[tauri::command]
 async fn is_security_warning_acknowledged(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
 ) -> Result<bool, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     map_error(db.is_security_warning_acknowledged())
@@ -1821,7 +1918,7 @@ async fn is_security_warning_acknowledged(
 
 #[tauri::command]
 async fn set_security_warning_acknowledged(
-    state: tauri::State<'_, AppState>,
+    state: tauri::State<'_, AppState<'_>>,
     acknowledged: bool,
 ) -> Result<(), String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
@@ -1867,6 +1964,7 @@ pub fn run() {
             app.manage(AppState {
                 db: Mutex::new(db),
                 discord_rpc: Mutex::new(discord_rpc),
+                index: Mutex::new(ModIndex::default()),
             });
 
             let app_dir = app
@@ -1945,6 +2043,8 @@ pub fn run() {
             process_mod_archive,
             is_mod_enabled,
             toggle_mod_enabled,
+            replace_mod_index,
+            get_mod_list,
             is_mod_enabled_by_path,
             toggle_mod_enabled_by_path,
             set_security_warning_acknowledged,
