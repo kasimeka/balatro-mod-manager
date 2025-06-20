@@ -42,14 +42,14 @@ impl ModType {
         }
     }
 
-    pub async fn check_installation(&self) -> bool {
+    pub async fn check_installation(&self, installation_path: Option<&String>) -> bool {
         match self {
             ModType::Steamodded => {
-                let installer = ModInstaller::new(ModType::Steamodded);
+                let installer = ModInstaller::new(installation_path, ModType::Steamodded);
                 installer.is_installed()
             }
             ModType::Talisman => {
-                let installer = ModInstaller::new(ModType::Talisman);
+                let installer = ModInstaller::new(installation_path, ModType::Talisman);
                 installer.is_installed()
             }
         }
@@ -64,19 +64,22 @@ struct ReleaseAsset {
 pub struct ModInstaller {
     client: reqwest::Client,
     pub mod_type: ModType,
+    pub installation_path: Option<String>,
 }
 
 impl ModInstaller {
-    pub fn new(mod_type: ModType) -> Self {
+    pub fn new(installation_path: Option<&String>, mod_type: ModType) -> Self {
         Self {
             client: reqwest::Client::new(),
             mod_type,
+            installation_path: installation_path.cloned(),
         }
     }
 
     pub fn is_installed(&self) -> bool {
-        let path = get_lovely_mods_dir();
-        fs::read_dir(path)
+        let mods_dir = get_lovely_mods_dir(self.installation_path.as_ref());
+
+        fs::read_dir(mods_dir)
             .map(|mut entries| {
                 entries.any(|e| {
                     e.ok()
@@ -181,13 +184,13 @@ impl ModInstaller {
     }
 
     pub async fn install_version(&self, version: &str) -> Result<String> {
-        let installation_path = get_lovely_mods_dir();
+        let mods_dir = get_lovely_mods_dir(self.installation_path.as_ref());
 
         match self.mod_type {
             ModType::Steamodded => {
                 info!(
                     "Installing Steamodded version {} to {:?}",
-                    version, installation_path
+                    version, mods_dir
                 );
 
                 let mut headers = HeaderMap::new();
@@ -201,13 +204,7 @@ impl ModInstaller {
                 let bytes = response.bytes().await?;
 
                 // Create temp directory
-                let temp_dir = installation_path.join(format!(
-                    "temp_{}",
-                    match self.mod_type {
-                        ModType::Steamodded => "smods",
-                        ModType::Talisman => "talisman",
-                    }
-                ));
+                let temp_dir = mods_dir.join("temp_smods");
                 if temp_dir.exists() {
                     fs::remove_dir_all(&temp_dir)?;
                 }
@@ -227,10 +224,7 @@ impl ModInstaller {
                     .map_err(|_| anyhow!("Invalid directory name"))?;
 
                 // Move to final location
-                let final_dir = match self.mod_type {
-                    ModType::Steamodded => installation_path.join(&root_dir),
-                    ModType::Talisman => installation_path.join("Talisman"),
-                };
+                let final_dir = mods_dir.join(&root_dir);
                 if final_dir.exists() {
                     fs::remove_dir_all(&final_dir)?;
                 }
@@ -258,7 +252,7 @@ impl ModInstaller {
                 let bytes = response.bytes().await?;
 
                 // Create installation directory
-                tokio_fs::create_dir_all(&installation_path).await?;
+                tokio_fs::create_dir_all(&mods_dir).await?;
 
                 // Extract directly to installation path
                 let cursor = Cursor::new(bytes);
@@ -266,7 +260,7 @@ impl ModInstaller {
 
                 for i in 0..archive.len() {
                     let mut file = archive.by_index(i)?;
-                    let outpath = installation_path.join(file.name());
+                    let outpath = mods_dir.join(file.name());
 
                     if file.name().ends_with('/') {
                         fs::create_dir_all(&outpath)?;
@@ -278,16 +272,13 @@ impl ModInstaller {
                         std::io::copy(&mut file, &mut outfile)?;
                     }
                 }
-                Ok(installation_path
-                    .join("Talisman")
-                    .to_string_lossy()
-                    .to_string())
+                Ok(mods_dir.join("Talisman").to_string_lossy().to_string())
             }
         }
     }
 
     pub async fn uninstall(&self) -> Result<()> {
-        let mods_dir = get_lovely_mods_dir();
+        let mods_dir = get_lovely_mods_dir(self.installation_path.as_ref());
         if !mods_dir.exists() {
             info!("Mods directory not found");
             return Ok(());
