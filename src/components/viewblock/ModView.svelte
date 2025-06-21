@@ -421,9 +421,9 @@
 					}));
 				} else {
 					const installedPath = await invoke<string>("install_mod", {
-						url: mod.downloadURL,
+						url: mod.download_url,
 						folderName:
-							mod.folderName || mod.title.replace(/\s+/g, ""),
+							mod.folder_name || mod.title.replace(/\s+/g, ""),
 					});
 					await invoke("add_installed_mod", {
 						name: mod.title,
