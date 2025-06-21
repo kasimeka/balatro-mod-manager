@@ -19,29 +19,28 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2.7.0", features = [] }
-tauri-plugin-shell = "2.3.0"
+tauri = { version = "2.5.1", features = [] }
+tauri-plugin-shell = "2.2.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tauri-plugin-dialog = "2.3.2"
+tauri-plugin-dialog = "2.2.2"
 bmm-lib = { path = "bmm-lib" }
 dirs = "6.0.0"
 tauri-plugin-fs = "2"
 log = "0.4.27"
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
-tauri-utils = "2.6.0"
+tauri-utils = "2.4.0"
 base64 = "0.22.1"
-reqwest = "0.12.23"
+reqwest = "0.12.18"
 # chrono = "0.4.40"
-zip = { version = "4.3.0", default-features = false, features = ["deflate"] }
+zip = "4.0.0"
 open = "5.3.2"
-tauri-plugin-prevent-default = "3.0.1"
+tauri-plugin-prevent-default = "2.1.1"
 tar = "0.4.44"
-flate2 = { version = "1.1.2", default-features = false, features = [
-	"rust_backend",
-] }
+flate2 = "1.1.1"
 walkdir = "2.5.0"
-rayon = "1.11.0"
+rayon = "1.10.0"
+balatro_mod_index = { version = "0.4.3", features = ["reqwest"] }
 
 [dev-dependencies]
 tempfile = "3.20.0"
