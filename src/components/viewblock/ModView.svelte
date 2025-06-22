@@ -1012,6 +1012,12 @@
 						</div>
 					</div>
 				{/if}
+				{#if mod.last_updated}
+					<div class="plaintext-details">
+						<div>last updated</div>
+						<span>{(new Date(mod.last_updated*1000)).toLocaleString()}</span>
+					</div>
+				{/if}
 			</div>
 			<div class="right-column">
 				<div
@@ -1127,6 +1133,11 @@
 	.category-tag:active {
 		transform: translateY(1px);
 		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	.plaintext-details {
+		text-align: center;
+		margin: 1rem 0;
 	}
 
 	.mod-view {
