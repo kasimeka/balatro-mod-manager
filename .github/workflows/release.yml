@@ -26,7 +26,7 @@ jobs:
         id: version
         run: |
           # Adjust this grep command if your version format or file path differs
-          APP_VERSION=$(grep -m1 'version =' src-tauri/Cargo.toml | cut -d '"' -f2)
+          APP_VERSION=$(grep -m1 'version =' tauri/Cargo.toml | cut -d '"' -f2)
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_OUTPUT
           
       - name: Generate GitHub-Style Release Notes

@@ -17,7 +17,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: src-tauri/bmm-lib
+        working-directory: bmm-lib
 
     steps:
       - name: Checkout code
@@ -60,7 +60,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-            src-tauri/bmm-lib/../lovely-injector/target/release  # Cache lovely-injector's target
+            bmm-lib/../lovely-injector/target/release  # Cache lovely-injector's target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build lovely-injector (macOS only)
