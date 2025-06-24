@@ -362,10 +362,20 @@
 				if (mod.requires_talisman) dependencies.push("Talisman");
 
 				if (mod.title.toLowerCase() === "steamodded") {
-					let installedPath = await invoke<string>(
-						"install_steamodded_version",
-						{ version: selectedVersion },
-					);
+					let installedPath;
+					if (selectedVersion === "newest") {
+						installedPath = await invoke<string>("install_mod", {
+							url: mod.download_url,
+							folderName:
+								mod.folder_name ||
+								mod.title.replace(/\s+/g, ""),
+						});
+					} else {
+						installedPath = await invoke<string>(
+							"install_steamodded_version",
+							{ version: selectedVersion },
+						);
+					}
 					const pathExists = await invoke("verify_path_exists", {
 						path: installedPath,
 					});
@@ -391,10 +401,20 @@
 						[mod.title]: false,
 					}));
 				} else if (mod.title.toLowerCase() === "talisman") {
-					let installedPath = await invoke<string>(
-						"install_talisman_version",
-						{ version: selectedVersion },
-					);
+					let installedPath;
+					if (selectedVersion === "newest") {
+						installedPath = await invoke<string>("install_mod", {
+							url: mod.download_url,
+							folderName:
+								mod.folder_name ||
+								mod.title.replace(/\s+/g, ""),
+						});
+					} else {
+						installedPath = await invoke<string>(
+							"install_talisman_version",
+							{ version: selectedVersion },
+						);
+					}
 					const pathExists = await invoke("verify_path_exists", {
 						path: installedPath,
 					});
@@ -1015,7 +1035,11 @@
 				{#if mod.last_updated}
 					<div class="plaintext-details">
 						<div>last updated</div>
-						<span>{(new Date(mod.last_updated*1000)).toLocaleString()}</span>
+						<span
+							>{new Date(
+								mod.last_updated * 1000,
+							).toLocaleString()}</span
+						>
 					</div>
 				{/if}
 			</div>
