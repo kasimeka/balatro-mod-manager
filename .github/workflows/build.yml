@@ -61,10 +61,13 @@ jobs:
           echo "CERT_ID=$CERT_ID" >> $GITHUB_ENV
           echo "Certificate imported. ID: $CERT_ID"
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: install pnpm
+        uses: pnpm/action-setup@v4
+      - name: setup node
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: lts/*
+          cache: 'pnpm'
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -78,7 +81,7 @@ jobs:
           # Using simpler cache config like in successful workflow
 
       - name: install frontend dependencies
-        run: bun install
+        run: pnpm install --frozen-lockfile
         
       - name: Extract app version on Unix systems
         if: matrix.platform == 'macos-latest' # || matrix.platform == 'ubuntu-22.04'
