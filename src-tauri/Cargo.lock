@@ -559,7 +559,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bromomethane"
+name = "balatro_mod_manager"
 version = "0.1.0"
 dependencies = [
  "assert_fs",

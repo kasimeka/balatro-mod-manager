@@ -128,7 +128,7 @@
 <div class="main-page">
   <header>
     <div class="header-content">
-      <h1>bromomethane</h1>
+      <h1>Balatro Mod Manager</h1>
       <LaunchButton />
     </div>
     <nav>
@@ -154,7 +154,7 @@
   >
     <!-- Keep Mods mounted to preserve state and avoid re-fetching
          Use display: contents when visible to avoid layout shifts -->
-    <div class="section" style:display={currentSection !== "mods" ? 'none' : 'contents'}>
+    <div class="section" style:display={currentSection !== "mods" ? "none" : "contents"}>
       <Mods mod={null} {handleDependencyCheck} on:request_uninstall={handleRequestUninstall} />
     </div>
     {#if currentSection === "mods"}

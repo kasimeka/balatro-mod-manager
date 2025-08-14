@@ -30,7 +30,7 @@ export default defineConfig(async () => ({
     },
   },
   define: {
-    __APP_REPO_SLUG__: JSON.stringify("kasimeka/bromomethane"),
+    __APP_REPO_SLUG__: JSON.stringify("skyline69/balatro-mod-manager"),
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
 }));

@@ -90,18 +90,18 @@
 
             meta = {
               inherit mainProgram;
-              homepage = "https://github.com/kasimeka/bromomethane";
+              homepage = "https://github.com/skyline69/balatro-mod-manager";
               license = pkgs.lib.licenses.gpl3;
               platforms = with pkgs.lib.platforms; linux ++ darwin; # darwin support untested
             };
           };
       in {
-        packages.default = self.packages.${system}.bromomethane;
-        packages.bromomethane = drv;
+        packages.default = self.packages.${system}.balatro-mod-manager;
+        packages.balatro-mod-manager = drv;
 
         devShells.default = self.devShells.${system}.full;
         devShells.minimal = pkgs.mkShell {
-          inputsFrom = [self.packages.${system}.bromomethane];
+          inputsFrom = pkgs.lib.attrValues self.packages.${system};
           packages = with pkgs; lib.optionals stdenv.isLinux [xdg-utils];
           shellHook = with pkgs;
             lib.optionalString stdenv.hostPlatform.isLinux ''

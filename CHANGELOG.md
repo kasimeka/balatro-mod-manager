@@ -45,7 +45,7 @@ all notable changes to this project will be documented in this file. the format 
 
 ### added
 
-- the same lints in `bmm_lib` & `bromomethane` bin crates are enforced in the `bromomethane` lib crate <!-- seriously rust, why are two files in the same directory considered two separate crates? -->
+- the same lints in `bmm_lib` & `balatro_mod_manager` bin crates are enforced in the `balatro_mod_manager` lib crate <!-- seriously rust, why are two files in the same directory considered two separate crates? -->
 - enforced default `js`, `ts` & `svelte` eslint rules on the frontend
 
 ### removed

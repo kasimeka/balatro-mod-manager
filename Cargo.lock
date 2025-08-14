@@ -405,6 +405,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "balatro-mod-manager"
+version = "0.3.0"
+dependencies = [
+ "assert_fs",
+ "balatro_mod_index",
+ "base64 0.22.1",
+ "bmm-lib",
+ "bytes",
+ "dirs",
+ "fix-path-env",
+ "flate2",
+ "log",
+ "lovely_mod_manager",
+ "mockito",
+ "open",
+ "predicates",
+ "rayon",
+ "reqwest",
+ "scopeguard",
+ "serde",
+ "serde_json",
+ "tar",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-prevent-default",
+ "tauri-plugin-shell",
+ "tauri-plugin-single-instance",
+ "tauri-plugin-window-state",
+ "tauri-utils",
+ "tempfile",
+ "test-case",
+ "tokio-test",
+ "walkdir",
+ "which",
+ "zip",
+]
+
+[[package]]
 name = "balatro_mod_index"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -555,46 +595,6 @@ dependencies = [
  "tempfile",
  "tokio",
  "winreg",
- "zip",
-]
-
-[[package]]
-name = "bromomethane"
-version = "0.4.0"
-dependencies = [
- "assert_fs",
- "balatro_mod_index",
- "base64 0.22.1",
- "bmm-lib",
- "bytes",
- "dirs",
- "fix-path-env",
- "flate2",
- "log",
- "lovely_mod_manager",
- "mockito",
- "open",
- "predicates",
- "rayon",
- "reqwest",
- "scopeguard",
- "serde",
- "serde_json",
- "tar",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-prevent-default",
- "tauri-plugin-shell",
- "tauri-plugin-single-instance",
- "tauri-plugin-window-state",
- "tauri-utils",
- "tempfile",
- "test-case",
- "tokio-test",
- "walkdir",
- "which",
  "zip",
 ]
 

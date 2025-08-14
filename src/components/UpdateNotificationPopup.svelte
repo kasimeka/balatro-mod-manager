@@ -188,7 +188,7 @@
         </div>
       {:else}
         <h2>you're up to date!</h2>
-        <p>you have the latest version of bromomethane.</p>
+        <p>you have the latest version of Balatro Mod Manager.</p>
         <p><strong>current version:</strong> v{__APP_VERSION__}</p>
 
         <div class="buttons">

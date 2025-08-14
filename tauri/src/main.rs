@@ -12,6 +12,6 @@ fn main() {
     if let Err(e) = bmm_lib::logging::init_logger() {
         eprintln!("Failed to initialize logging: {e}");
     }
-    bromomethane::run();
+    balatro_mod_manager::run();
     log::logger().flush();
 }

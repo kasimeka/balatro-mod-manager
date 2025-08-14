@@ -1,17 +1,17 @@
 [package]
-name = "bromomethane"
-version = "0.4.0"
+name = "balatro-mod-manager"
+version = "0.3.0"
 description = "A mod manager for Balatro - easily install and manage mods for the popular roguelike deckbuilding game"
-authors = ["kasimeka <kasimeka@tuta.io>"]
+authors = ["skyline69<67526259+skyline69@users.noreply.github.com>"]
 edition = "2024"
 keywords = ["gaming", "mods", "balatro", "manager", "tauri"]
 categories = ["games", "development-tools", "gui"]
 readme = "README.md"
-repository = "https://github.com/kasimeka/bromomethane"
+repository = "https://github.com/skyline69/balatro-mod-manager"
 publish = false
 
 [[bin]]
-name = "bromomethane"
+name = "BMM"
 path = "src/main.rs"
 
 [build-dependencies]
