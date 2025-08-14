@@ -3,7 +3,6 @@ resolver = "3"
 members = ["tauri", "bmm-lib"]
 
 [workspace.dependencies]
-
 anyhow = "1.0.98"
 assert_fs = "1.1.3"
 balatro_mod_index = "0.4.3"
