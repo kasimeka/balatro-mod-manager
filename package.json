@@ -20,7 +20,8 @@
         "@tauri-apps/plugin-window-state": "~2.2.2",
         "axios": "^1.9.0",
         "flexsearch": "^0.8.204",
-        "lodash": "^4.17.21"
+        "lodash": "^4.17.21",
+        "svelte-confetti": "^2.3.2"
     },
     "devDependencies": {
         "@eslint/compat": "^1.3.0",

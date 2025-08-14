@@ -122,8 +122,8 @@ jobs:
         with:
           name: macos-app
           path: |
-            tauri/target/universal-apple-darwin/release/bundle/macos/Balatro Mod Manager.app/**
-            tauri/target/universal-apple-darwin/release/bundle/dmg/Balatro Mod Manager_${{ env.APP_VERSION }}_universal.dmg
+            target/universal-apple-darwin/release/bundle/macos/Balatro Mod Manager.app/**
+            target/universal-apple-darwin/release/bundle/dmg/Balatro Mod Manager_${{ env.APP_VERSION }}_universal.dmg
           retention-days: 1
           
       - name: Upload Windows artifacts
@@ -132,8 +132,8 @@ jobs:
         with:
           name: windows-app
           path: |
-            tauri/target/release/bundle/msi/*.msi
-            tauri/target/release/bundle/nsis/*.exe
+            target/release/bundle/msi/*.msi
+            target/release/bundle/nsis/*.exe
           retention-days: 1
           
       # Linux artifacts upload removed since build is disabled
@@ -143,6 +143,6 @@ jobs:
       #   with:
       #     name: linux-app
       #     path: |
-      #       tauri/target/release/bundle/deb/*.deb
-      #       tauri/target/release/bundle/appimage/*.AppImage
+      #       target/release/bundle/deb/*.deb
+      #       target/release/bundle/appimage/*.AppImage
       #     retention-days: 1
