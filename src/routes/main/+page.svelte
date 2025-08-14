@@ -152,6 +152,11 @@
     class:modal-open={!!$currentModView && currentSection == "mods"}
     bind:this={contentElement}
   >
+    <!-- Keep Mods mounted to preserve state and avoid re-fetching
+         Use display: contents when visible to avoid layout shifts -->
+    <div class="section" style:display={currentSection !== "mods" ? 'none' : 'contents'}>
+      <Mods mod={null} {handleDependencyCheck} on:request_uninstall={handleRequestUninstall} />
+    </div>
     {#if currentSection === "mods"}
       <Mods mod={null} {handleDependencyCheck} on:request_uninstall={handleRequestUninstall} />
     {/if}
